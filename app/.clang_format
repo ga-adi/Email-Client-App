@@ -1,0 +1,14 @@
+---
+Language: Java
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignOperands: true
+AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine : SFS_All
+AllowShortIfStatementsOnASingleLine : true
+AllowShortLoopsOnASingleLine: true
+BreakStringLiterals: true
+ColumnLimit: 100
+IndentWidth: 8
+IndentCaseLabels: false
