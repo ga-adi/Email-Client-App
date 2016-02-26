@@ -32,4 +32,9 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@android:drawable/ic_dialog_email"/>
 
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/snackbar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </android.support.design.widget.CoordinatorLayout>
