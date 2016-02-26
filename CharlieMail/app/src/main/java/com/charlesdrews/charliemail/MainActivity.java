@@ -1,9 +1,9 @@
 package com.charlesdrews.charliemail;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -13,6 +13,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    public static final String SELECTED_EMAIL_KEY = "selectedEmailKey";
+
+    private boolean mTwoPanes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +23,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mTwoPanes = (findViewById(R.id.detail_fragment_container) != null);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -55,8 +60,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        //TODO - launch detail activity / fragment w/ selected email
-        String subject = ((TextView) v.findViewById(R.id.email_subject)).getText().toString();
-        Toast.makeText(v.getContext(), "You clicked " + subject, Toast.LENGTH_SHORT).show();
+        switch (v.getId()) {
+            case R.id.email_subject:
+                String subject = ((TextView) v.findViewById(R.id.email_subject)).getText().toString();
+                Bundle bundle = new Bundle();
+                //TODO - pass just id, not each component like subject
+                bundle.putString(SELECTED_EMAIL_KEY, subject);
+
+                if (mTwoPanes) {
+                    // update detail fragment in right pane
+                    DetailFragment detailFragment = new DetailFragment();
+                    detailFragment.setArguments(bundle);
+
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.detail_fragment_container, detailFragment)
+                            .commit();
+                } else {
+                    // launch detail activity
+                    Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
