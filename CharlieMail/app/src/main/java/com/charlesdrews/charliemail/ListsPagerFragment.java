@@ -21,9 +21,9 @@ public class ListsPagerFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_lists_pager, container, false);
 
         TabLayout tabLayout = (TabLayout) rootView.findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Inbox"));
-        tabLayout.addTab(tabLayout.newTab().setText("Drafts"));
-        tabLayout.addTab(tabLayout.newTab().setText("Sent"));
+        for (int i = 0; i < ListsPagerAdapter.NUMBER_OF_TABS; i++) {
+            tabLayout.addTab(tabLayout.newTab().setText(ListsPagerAdapter.TAB_NAMES[i]));
+        }
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
         final ViewPager viewPager = (ViewPager) rootView.findViewById(R.id.list_pager);

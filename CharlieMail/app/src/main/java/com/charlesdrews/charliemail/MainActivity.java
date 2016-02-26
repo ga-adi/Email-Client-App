@@ -9,8 +9,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,5 +51,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        //TODO - launch detail activity / fragment w/ selected email
+        String subject = ((TextView) v.findViewById(R.id.email_subject)).getText().toString();
+        Toast.makeText(v.getContext(), "You clicked " + subject, Toast.LENGTH_SHORT).show();
     }
 }

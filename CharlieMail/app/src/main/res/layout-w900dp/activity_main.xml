@@ -34,7 +34,7 @@
             android:layout_height="match_parent">
 
             <fragment
-                android:id="@+id/list_fragment"
+                android:id="@+id/list_pager_fragment"
                 android:name="com.charlesdrews.charliemail.ListsPagerFragment"
                 android:layout_weight="0.5"
                 android:layout_width="0dp"

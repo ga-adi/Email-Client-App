@@ -26,7 +26,7 @@
         </android.support.design.widget.AppBarLayout>
 
         <fragment
-            android:id="@+id/list_fragment"
+            android:id="@+id/list_pager_fragment"
             android:name="com.charlesdrews.charliemail.ListsPagerFragment"
             android:layout_below="@id/app_bar_layout"
             android:layout_width="match_parent"
