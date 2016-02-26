@@ -28,13 +28,13 @@ import java.util.Arrays;
 /**
  * Copyright 2016 Boloutare Doubeni
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements InboxFragment.OnEmailClickListener {
 
   public static final int REQUEST_ACCOUNT_PICKER = 1000;
   public static final int REQUEST_AUTHORIZATION = 1001;
   public static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
   private static final String PREF_ACCOUNT_NAME = "accountName";
-  private static final String[] SCOPES = {GmailScopes.GMAIL_LABELS};
+  private static final String[] SCOPES = {GmailScopes.GMAIL_READONLY};
 
   private GoogleAccountCredential mCredential;
 
@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     return true;
   }
 
+
   public void showGooglePlayServicesAvailabilityErrorDialog(
       final int connectionStatusCode) {
     Dialog dialog = GooglePlayServicesUtil.getErrorDialog(
@@ -169,5 +170,10 @@ public class MainActivity extends AppCompatActivity {
   private void chooseAccount() {
     startActivityForResult(mCredential.newChooseAccountIntent(),
                            REQUEST_ACCOUNT_PICKER);
+  }
+
+  @Override
+  public void setEmail(String emailID) {
+
   }
 }
