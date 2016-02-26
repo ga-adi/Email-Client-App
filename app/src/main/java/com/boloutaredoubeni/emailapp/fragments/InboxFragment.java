@@ -11,10 +11,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.activities.MainActivity;
+import com.boloutaredoubeni.emailapp.models.Email;
 import com.boloutaredoubeni.emailapp.views.adapters.InboxAdapter;
+import com.boloutaredoubeni.emailapp.views.listeners.InboxItemClickedListener;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
@@ -39,6 +43,7 @@ public class InboxFragment extends Fragment {
 
   private RecyclerView mRecyclerView;
   private InboxAdapter mAdapter;
+  private ProgressBar mProgressBar;
 
   public InboxFragment() {}
 
@@ -47,14 +52,22 @@ public class InboxFragment extends Fragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
     View view =  inflater.inflate(R.layout.inbox_fragment, container, false);
+    mProgressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
     mRecyclerView = (RecyclerView) view.findViewById(R.id.inbox_recycler);
+    mRecyclerView.addOnItemTouchListener(new InboxItemClickedListener(getContext(), new InboxItemClickedListener.OnItemClickListener() {
+      @Override
+      public void onItemClick(View view, int position) {
+        // TODO: Move to next fragment
+        Toast.makeText(getContext(), "Clicked on Item", Toast.LENGTH_SHORT).show();
+      }
+    }));
     return view;
   }
 
   @Override
   public void onActivityCreated(@Nullable Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    mAdapter = new InboxAdapter(new ArrayList<Message>());
+    mAdapter = new InboxAdapter(new ArrayList<Email>());
     LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setAdapter(mAdapter);
     mRecyclerView.setLayoutManager(layoutManager);
@@ -87,7 +100,7 @@ public class InboxFragment extends Fragment {
 
   public interface OnEmailClickListener { void setEmail(String emailID); }
 
-  private class MessageTask extends AsyncTask<Void, Void, ArrayList<Message>> {
+  private class MessageTask extends AsyncTask<Void, Void, ArrayList<Email>> {
     private com.google.api.services.gmail.Gmail mService = null;
     private Exception mLastError = null;
 
@@ -102,7 +115,7 @@ public class InboxFragment extends Fragment {
     }
 
     @Override
-    protected ArrayList<Message> doInBackground(Void... params) {
+    protected ArrayList<Email> doInBackground(Void... params) {
       try {
         return getInboxMessages();
       } catch (IOException e) {
@@ -134,8 +147,9 @@ public class InboxFragment extends Fragment {
     }
 
     @Override
-    protected void onPostExecute(ArrayList<Message> messages) {
+    protected void onPostExecute(ArrayList<Email> messages) {
       super.onPostExecute(messages);
+      mProgressBar.setVisibility(View.GONE);
       mAdapter.addMessages(messages);
     }
 
@@ -144,9 +158,10 @@ public class InboxFragment extends Fragment {
      *
      * @throws IOException
      */
-    private ArrayList<Message> getInboxMessages() throws IOException {
+    private ArrayList<Email> getInboxMessages() throws IOException {
       String user = "me";
       ArrayList<Message> messages = new ArrayList<>();
+      ArrayList<Email> emails = new ArrayList<>();
 
       ListMessagesResponse response =
           mService.users().messages().list(user).execute();
@@ -166,7 +181,13 @@ public class InboxFragment extends Fragment {
 //        }
 //      }
 
-      return messages;
+      for (final Message message : messages) {
+        String id = message.getId();
+        Message msg = mService.users().messages().get(user, message.getId()).execute();
+        emails.add(new Email(id, msg.getSnippet()));
+      }
+
+      return emails;
     }
   }
 }

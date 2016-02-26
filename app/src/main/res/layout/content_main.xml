@@ -13,10 +13,6 @@
     tools:context=".activities.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="100dp"
-        android:layout_height="100dp"/>
     <FrameLayout
         android:id="@+id/inbox_container"
         android:layout_width="match_parent"

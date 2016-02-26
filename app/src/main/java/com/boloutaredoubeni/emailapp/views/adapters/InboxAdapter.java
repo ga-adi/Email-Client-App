@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.boloutaredoubeni.emailapp.R;
-import com.google.api.services.gmail.model.Message;
+import com.boloutaredoubeni.emailapp.models.Email;
 
 import java.util.ArrayList;
 
@@ -16,10 +16,10 @@ import java.util.ArrayList;
  */
 public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> {
 
-  private ArrayList<Message> mMessages;
+  private ArrayList<Email> mEmails;
 
-  public InboxAdapter(ArrayList<Message> messageList) {
-    mMessages = messageList;
+  public InboxAdapter(ArrayList<Email> messageList) {
+    mEmails = messageList;
   }
 
   @Override
@@ -30,13 +30,13 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
 
   @Override
   public void onBindViewHolder(ViewHolder holder, int position) {
-    Message message = mMessages.get(position);
-    holder.mMessageText.setText(message.getId());
+    Email email = mEmails.get(position);
+    holder.mMessageText.setText(email.getBody());
   }
 
   @Override
   public int getItemCount() {
-    return mMessages.size();
+    return mEmails.size();
   }
 
   public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -48,8 +48,8 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
     }
   }
 
-  public void addMessages(ArrayList<Message> messages) {
-    mMessages.addAll(messages);
+  public void addMessages(ArrayList<Email> messages) {
+    mEmails.addAll(messages);
     notifyDataSetChanged();
   }
 }
