@@ -149,14 +149,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         //TODO - don't need this here
-        /*
         if (isGooglePlayServicesAvailable()) {
             refreshResults();
         } else {
             mOutputText.setText("Google Play Services required: " +
                     "after installing, close and relaunch this app.");
         }
-        */
     }
 
     /**
@@ -341,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 output.add(0, "Data retrieved using the Gmail API:");
                 //TODO
-                mOutputText.setText(TextUtils.join("\n", output));
+                //mOutputText.setText(TextUtils.join("\n", output));
             }
         }
 
