@@ -65,7 +65,7 @@ public class InboxFragment extends Fragment {
     super.onResume();
     if (((MainActivity)getActivity())
             .getCredential()
-            .getSelectedAccountName() == null) {
+            .getSelectedAccountName() != null) {
       if (((MainActivity)getActivity()).isDeviceOnline()) {
         new MessageTask(((MainActivity)getActivity()).getCredential())
             .execute();
@@ -151,20 +151,20 @@ public class InboxFragment extends Fragment {
       ListMessagesResponse response =
           mService.users().messages().list(user).execute();
 
-      while (response.getMessages() != null) {
+//      while (response.getMessages() != null) {
         messages.addAll(response.getMessages());
         // Move to the next page and get the messages
-        if (response.getNextPageToken() != null) {
-          String pageToken = response.getNextPageToken();
-          response = mService.users()
-                         .messages()
-                         .list(user)
-                         .setPageToken(pageToken)
-                         .execute();
-        } else {
-          break;
-        }
-      }
+//        if (response.getNextPageToken() != null) {
+//          String pageToken = response.getNextPageToken();
+//          response = mService.users()
+//                         .messages()
+//                         .list(user)
+//                         .setPageToken(pageToken)
+//                         .execute();
+//        } else {
+//          break;
+//        }
+//      }
 
       return messages;
     }

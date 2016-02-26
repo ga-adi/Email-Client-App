@@ -51,10 +51,12 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
                       .setSelectedAccountName(
                           settings.getString(PREF_ACCOUNT_NAME, null));
 
+    setContentView(R.layout.activity_main);
+
     FragmentManager manager = getSupportFragmentManager();
     FragmentTransaction transaction = manager.beginTransaction();
     InboxFragment inboxFragment = new InboxFragment();
-    transaction.add(inboxFragment, "inboxfrag");
+    transaction.add(R.id.inbox_container, inboxFragment, "inboxfrag");
     transaction.commit();
   }
 

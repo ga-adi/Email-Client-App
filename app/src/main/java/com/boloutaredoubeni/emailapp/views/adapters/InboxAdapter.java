@@ -24,14 +24,14 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
 
   @Override
   public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_item, parent);
+    View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_item, null);
     return new ViewHolder(itemView);
   }
 
   @Override
   public void onBindViewHolder(ViewHolder holder, int position) {
     Message message = mMessages.get(position);
-    holder.mMessageText.setText(message.getRaw());
+    holder.mMessageText.setText(message.getId());
   }
 
   @Override
