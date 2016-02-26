@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.activities.MainActivity;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -45,11 +46,28 @@ public class InboxFragment extends Fragment {
                            Bundle savedInstanceState) {
     // TODO: init the list view
     // TODO: set the adapter
-    return super.onCreateView(inflater, container, savedInstanceState);
+    return inflater.inflate(R.layout.inbox_fragment, container, false);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    if (((MainActivity)getActivity())
+            .getCredential()
+            .getSelectedAccountName() == null) {
+      if (((MainActivity)getActivity()).isDeviceOnline()) {
+        // FIXME: run in fragment
+        new MessageTask(((MainActivity)getActivity()).getCredential())
+            .execute();
+      } else {
+        Log.e("InboxFragment", "No network connection available.");
+      }
+    }
   }
 
   @Override
   public void onAttach(Context context) {
+    super.onAttach(context);
     try {
       mListener = (OnEmailClickListener)getActivity();
     } catch (ClassCastException ex) {
@@ -57,9 +75,7 @@ public class InboxFragment extends Fragment {
     }
   }
 
-
   public interface OnEmailClickListener { void setEmail(String emailID); }
-
 
   private class MessageTask extends AsyncTask<Void, Void, List<Message>> {
     private com.google.api.services.gmail.Gmail mService = null;
@@ -91,9 +107,10 @@ public class InboxFragment extends Fragment {
       // TODO: update the UI to reflect a cancelled request
       if (mLastError != null) {
         if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
-          ((MainActivity)getActivity()).showGooglePlayServicesAvailabilityErrorDialog(
-              ((GooglePlayServicesAvailabilityIOException) mLastError)
-                  .getConnectionStatusCode());
+          ((MainActivity)getActivity())
+              .showGooglePlayServicesAvailabilityErrorDialog(
+                  ((GooglePlayServicesAvailabilityIOException)mLastError)
+                      .getConnectionStatusCode());
         } else if (mLastError instanceof UserRecoverableAuthIOException) {
           startActivityForResult(
               ((UserRecoverableAuthIOException)mLastError).getIntent(),
@@ -102,7 +119,7 @@ public class InboxFragment extends Fragment {
           mLastError.printStackTrace();
         }
       } else {
-        Log.d("InboxFragment", "getting inbox data cancelled");
+        Log.e("InboxFragment", "getting inbox data cancelled");
       }
     }
 
@@ -135,7 +152,5 @@ public class InboxFragment extends Fragment {
 
       return messages;
     }
-
-
   }
 }
