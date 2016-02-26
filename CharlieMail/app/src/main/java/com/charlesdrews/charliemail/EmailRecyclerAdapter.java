@@ -1,5 +1,6 @@
 package com.charlesdrews.charliemail;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
  */
 public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdapter.ViewHolder> {
     private ArrayList<Email> mEmails;
+    private Context mContext;
 
     public EmailRecyclerAdapter(ArrayList<Email> emails) {
         mEmails = emails;
@@ -22,24 +24,25 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        mContext = parent.getContext();
+
         View holder = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.email_list_item, parent, false);
-        View subject = holder.findViewById(R.id.email_subject);
-
-        try {
-            //TODO - set on click listeners for other components of email list item
-            subject.setOnClickListener( (View.OnClickListener) parent.getContext() );
-        } catch (ClassCastException e) {
-            Log.e("EmailRecyclerAdapter", "Error casting parent.getContext() to View.OnClickListener");
-            e.printStackTrace();
-        }
 
         return new ViewHolder(holder);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        //TODO - get the message id and use it here
         holder.mSubject.setText(mEmails.get(position).getSubject());
+        try {
+            //TODO - set on click listeners for other components of email list item
+            holder.mSubject.setOnClickListener( (View.OnClickListener) mContext);
+        } catch (ClassCastException e) {
+            Log.e("EmailRecyclerAdapter", "Error casting parent.getContext() to View.OnClickListener");
+            e.printStackTrace();
+        }
     }
 
     @Override

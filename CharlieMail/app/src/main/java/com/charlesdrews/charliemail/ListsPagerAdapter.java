@@ -16,6 +16,7 @@ public class ListsPagerAdapter extends FragmentStatePagerAdapter {
     public static final int DRAFTS_INDEX = 1;
     public static final int SENT_INDEX = 2;
     public static final String[] TAB_NAMES = {"Inbox", "Drafts", "Sent"};
+    public static final String[] GMAIL_LABELS = {"INBOX", "DRAFT", "SENT"};
 
     private int mNumOfTabs;
     private EmailListFragment mInboxListFrag, mDraftListFrag, mSentListFrag;
