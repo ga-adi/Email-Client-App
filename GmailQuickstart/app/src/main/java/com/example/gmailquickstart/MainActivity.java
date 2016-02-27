@@ -54,25 +54,23 @@ public class MainActivity extends AppCompatActivity {
     private EmailAdapter mEmailAdapter;
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mRecyclerViewLayoutManager;
+    public SharedPreferences settings;
 
     //scopes updated for Read/write permissions
-    private static final String[] SCOPES = {GmailScopes.GMAIL_LABELS,GmailScopes.GMAIL_READONLY,GmailScopes.GMAIL_COMPOSE,GmailScopes.MAIL_GOOGLE_COM,GmailScopes.GMAIL_INSERT,GmailScopes.GMAIL_MODIFY};
-    static final int REQUEST_ACCOUNT_PICKER = 1000;
-    static final int REQUEST_AUTHORIZATION = 1001;
-    private static final String PREF_ACCOUNT_NAME = "stringKey";
-    static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
-
-    //Replace AsyncTask DB call to retrieve all emails, transform into Email objects, then store in Singleton for easy access (will need to limit number of emails retrieved...
-    //Update onClick listener in RecyclerViewHolder to open email messages
-    //Add FAB to launch compose email screen
+    public static final String[] SCOPES = {GmailScopes.GMAIL_LABELS,GmailScopes.GMAIL_READONLY,GmailScopes.GMAIL_COMPOSE,GmailScopes.MAIL_GOOGLE_COM,GmailScopes.GMAIL_INSERT,GmailScopes.GMAIL_MODIFY};
+    public static final int REQUEST_ACCOUNT_PICKER = 1000;
+    public static final int REQUEST_AUTHORIZATION = 1001;
+    public static final String PREF_ACCOUNT_NAME = "stringKey";
+    public static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
+    public static final String SHARED_PREFS = "prefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity_phone);
 
-        // Initialize credentials and service object.
-        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
+        // Initialize credentials and service object
+        settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff())
@@ -94,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mRecyclerViewLayoutManager);
         mRecyclerView.setAdapter(mEmailAdapter);
+
+        //Add FAB to launch compose email screen**************************
     }
 
     @Override
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                     String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     if (accountName != null) {
                         mCredential.setSelectedAccountName(accountName);
-                        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
+                        settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = settings.edit();
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();}
@@ -188,9 +188,8 @@ public class MainActivity extends AppCompatActivity {
         //Background task to call Gmail API
         @Override
         protected ArrayList<Email> doInBackground(Void... params) {
-            try {
-                return getDataFromApi();
-            } catch (Exception e) {
+            try {return getDataFromApi();}
+            catch (Exception e) {
                 mLastError = e;
                 cancel(true);
                 return null;
@@ -210,33 +209,31 @@ public class MainActivity extends AppCompatActivity {
                 Message message = messages.get(i);
                 Message actual = mService.users().messages().get("me", message.getId()).execute();
 
-                //create new email object to represent the message in the app and show the subject/snippet in the RecyclerView
-                Email email = new Email();
-                email.setmEmailID(actual.getId());
-                email.setmSnippet(actual.getSnippet());
-                email.setmLabelIDs(actual.getLabelIds().toArray(email.getmLabelIDs()));
-
-                //test to confirm JSON location indices for desired Email properties
-                for (int x = 0; x < actual.getPayload().getHeaders().size(); x++) {
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("Subject")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("Date")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("From")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("To")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("Cc")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
-                    if(actual.getPayload().getHeaders().get(x).getName().equals("Bcc")){
-                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                //Confirm if Message is already accounted for in EmailList Singleton
+                Boolean isNew = true;
+                for (Email z:EmailList.getInstance().getAllEmails()) {
+                    if(z.getmEmailID().equals(actual.getId())){
+                        isNew = false;}
                 }
-                EmailList.getInstance().addEmail(i, email);
+
+                if(isNew){
+                    //create new email object to represent the message in the app and show the subject/snippet in the RecyclerView
+                    Email email = new Email();
+                    email.setmEmailID(actual.getId());
+                    email.setmSnippet(actual.getSnippet());
+                    email.setmLabelIDs(actual.getLabelIds().toArray(email.getmLabelIDs()));
+
+                    //test to confirm JSON location indices for desired Email Header properties
+                    for (int x = 0; x < actual.getPayload().getHeaders().size(); x++) {
+                        if(actual.getPayload().getHeaders().get(x).getName().equals("Subject")){
+                            email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    }
+                    EmailList.getInstance().addEmail(i, email);
+                }
             }
 
             return EmailList.getInstance().getInbox();
         }
-
 
         @Override
         protected void onPostExecute(ArrayList<Email> output) {

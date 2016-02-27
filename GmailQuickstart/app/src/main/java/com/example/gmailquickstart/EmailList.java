@@ -27,9 +27,11 @@ public class EmailList {
     public ArrayList<Email> getInbox(){
         ArrayList<Email> inbox = new ArrayList<>();
         for (Email email:mEmailArrayList) {
-            for(String x:email.getmLabelIDs()){
-                if(x.equals("INBOX")){
-                    inbox.add(email);
+            if(email.getmLabelIDs()!=null){
+                for(String x:email.getmLabelIDs()){
+                    if(x.equals("INBOX")){
+                        inbox.add(email);
+                    }
                 }
             }
         }
@@ -39,9 +41,11 @@ public class EmailList {
     public ArrayList<Email> getSentMail(){
         ArrayList<Email> sentMail = new ArrayList<>();
         for (Email email:mEmailArrayList) {
-            for(String x:email.getmLabelIDs()){
-                if(x.equals("SENT")){
-                    sentMail.add(email);
+            if(email.getmLabelIDs()!=null){
+                for(String x:email.getmLabelIDs()){
+                    if(x.equals("SENT")){
+                        sentMail.add(email);
+                    }
                 }
             }
         }
@@ -54,6 +58,10 @@ public class EmailList {
 
     public void addEmail (int position, Email email){
         mEmailArrayList.add(position,email);
+    }
+
+    public void replaceEmail (int position, Email email){
+        mEmailArrayList.set(position,email);
     }
 
     public Email get (int position){

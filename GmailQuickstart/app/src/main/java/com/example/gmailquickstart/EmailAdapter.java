@@ -1,6 +1,7 @@
 package com.example.gmailquickstart;
 
 
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.ViewHolder> {
 
     ArrayList<Email> mArrayList;
+    public static final String EMAIL_ID = "Email ID";
+    public static final String EMAIL_SUBJECT = "Email Subject";
 
     public EmailAdapter(ArrayList<Email> array) {
         mArrayList = array;
@@ -45,11 +48,15 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.ViewHolder> 
             super(view);
             emailSnippet = (TextView)view.findViewById(R.id.xmlEmailSnippet);
             emailSubject = (TextView)view.findViewById(R.id.xmlEmailSubject);
+            view.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            //Code to open email view screen
+            Intent intent = new Intent(v.getContext(),ReadEmailActivity.class);
+            intent.putExtra(EMAIL_ID,mArrayList.get(getLayoutPosition()).getmEmailID());
+            intent.putExtra(EMAIL_SUBJECT,mArrayList.get(getLayoutPosition()).getmPayloadHeadersSubject());
+            v.getContext().startActivity(intent);
         }
     }
 }
