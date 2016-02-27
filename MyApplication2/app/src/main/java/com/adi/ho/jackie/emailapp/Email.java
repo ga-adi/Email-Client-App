@@ -12,6 +12,8 @@ public class Email {
     private String sender;
     private String date;
     private String body;
+    private String recipient;
+    private String favorite;
 
     public Email (HashMap<String,String> emailHeader){
         id = emailHeader.get("ID");
@@ -19,6 +21,8 @@ public class Email {
         sender = emailHeader.get("SENDER");
         date = emailHeader.get("DATE");
         body = emailHeader.get("BODY");
+        recipient = emailHeader.get("RECIPIENT");
+        favorite = emailHeader.get("FAVORITE");
     }
 
     public String getId() {
@@ -38,4 +42,9 @@ public class Email {
     }
 
     public String getBody(){ return body;}
+
+    public String getRecipient(){ return recipient;}
+
+    public String getFavorite(){return favorite;}
+
 }

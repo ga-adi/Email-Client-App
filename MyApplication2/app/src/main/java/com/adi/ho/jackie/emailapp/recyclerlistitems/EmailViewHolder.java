@@ -26,7 +26,7 @@ public class EmailViewHolder extends RecyclerView.ViewHolder implements View.OnC
     TextView emailDate;
     ImageView emailStar;
     TextView emailSnippet;
-    TextView emailBody;
+    TextView emailId;
     private Context context;
 
     public EmailViewHolder(View itemView) {
@@ -37,14 +37,14 @@ public class EmailViewHolder extends RecyclerView.ViewHolder implements View.OnC
         emailLabel = (TextView) itemView.findViewById(R.id.email_label);
         emailDate = (TextView)itemView.findViewById(R.id.email_date);
         emailSnippet = (TextView)itemView.findViewById(R.id.email_snippet);
-        emailBody = (TextView)itemView.findViewById(R.id.invisible_body);
+        emailId = (TextView)itemView.findViewById(R.id.invisible_id);
     }
 
     @Override
     public void onClick(View v) {
         Intent intent = new Intent(context, EmailItemDetailActivity.class);
-        String body = emailBody.getText().toString();
-        intent.putExtra("EMAILBODY",body);
+        String id = emailId.getText().toString();
+        intent.putExtra("EMAILID",id);
         context.startActivity(intent);
     }
 }

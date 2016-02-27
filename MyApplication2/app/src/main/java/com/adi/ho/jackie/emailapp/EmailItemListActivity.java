@@ -27,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
 import com.adi.ho.jackie.emailapp.dummy.DummyContent;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailRecyclerAdapter;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.VerticalSpaceItemDecoration;
@@ -68,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -81,7 +83,7 @@ import javax.net.ssl.HttpsURLConnection;
  * item details side-by-side using two vertical panes.
  */
 public class EmailItemListActivity extends AppCompatActivity {
-    GoogleAccountCredential mCredential;
+    public GoogleAccountCredential mCredential;
     ProgressDialog mProgress;
     EmailRecyclerAdapter mEmailRecyclerAdapter;
     private List<String> mEmailIdsList;
@@ -101,6 +103,7 @@ public class EmailItemListActivity extends AppCompatActivity {
     private boolean mTwoPane;
     private boolean mRefresh;
     RecyclerView emaillistRecycler;
+    private MailDatabaseOpenHelper mHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -267,13 +270,12 @@ public class EmailItemListActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private class MakeRequestTask extends AsyncTask<ArrayList<String>, Void, List<Email>> {
+    private class MakeRequestTask extends AsyncTask<ArrayList<String>, Email, List<Email>> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
         private HashMap<String, String> emailHash;
         String date;
         String sender;
-        byte[] emailData;
 
         public MakeRequestTask(GoogleAccountCredential credential) {
 
@@ -286,6 +288,7 @@ public class EmailItemListActivity extends AppCompatActivity {
 
             emailHash = new HashMap<>();
         }
+
         @Override
         protected List<Email> doInBackground(ArrayList<String>... params) {
 
@@ -298,12 +301,15 @@ public class EmailItemListActivity extends AppCompatActivity {
 
                     for (MessagePartHeader messagePartHeader : message.getPayload().getHeaders()) {
                         if (messagePartHeader.getName().equals("Date")) {
-                            date = messagePartHeader.getValue().substring(0,11);
+                            date = messagePartHeader.getValue().substring(0, 11);
                             emailHash.put("DATE", date);
                         }
                         if (messagePartHeader.getName().equals("From")) {
                             String sender = messagePartHeader.getValue();
                             emailHash.put("SENDER", sender);
+                        }
+                        if (messagePartHeader.getName().equals("Delivered-To")) {
+                            emailHash.put("RECIPIENT", messagePartHeader.getValue());
                         }
 
                     }
@@ -311,23 +317,34 @@ public class EmailItemListActivity extends AppCompatActivity {
                     if (message.getPayload().getParts() != null) {
                         firstMessagePart = message.getPayload().getParts().get(0);
                         String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(firstMessagePart.getBody().getData()));
-                        emailHash.put("BODY",emailBody);
+                        emailHash.put("BODY", emailBody);
                     } else {
                         String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(message.getPayload().getBody().getData()));
-                        emailHash.put("BODY",emailBody);
+                        emailHash.put("BODY", emailBody);
                     }
 
-                        emailHash.put("SNIPPET", message.getSnippet());
-                        emailHash.put("ID", id);
+                    emailHash.put("SNIPPET", message.getSnippet());
+                    emailHash.put("ID", id);
+                    emailHash.put("FAVORITE", "0");
 
-                        emailHeaderList.add(new Email(emailHash));
-                    Log.i("EMAILS", "Added email id: "+id);
-                    }
+                    Email email = new Email(emailHash);
+                    emailHeaderList.add(email);
+                    publishProgress(email);
+
+                    Log.i("EMAILS", "Added email id: " + id);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return emailHeaderList;
+        }
+
+        //Insert each email into database
+        @Override
+        protected void onProgressUpdate(Email... values) {
+            super.onProgressUpdate(values);
+            new InsertEmailDBAsyncTask().execute(values[0]);
         }
 
         @Override
@@ -426,6 +443,23 @@ public class EmailItemListActivity extends AppCompatActivity {
             mEmailIdsList = ids;
             new MakeRequestTask(mCredential).execute(ids);
 
+        }
+    }
+
+    //Save emails to database
+    private class InsertEmailDBAsyncTask extends AsyncTask<Email, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
+
+        }
+
+        @Override
+        protected Void doInBackground(Email... params) {
+            mHelper.addEmailsToDatabase(params[0]);
+            return null;
         }
     }
 

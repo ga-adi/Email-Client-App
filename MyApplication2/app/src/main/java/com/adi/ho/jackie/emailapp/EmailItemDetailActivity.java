@@ -1,15 +1,26 @@
 package com.adi.ho.jackie.emailapp;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+
+import java.util.HashMap;
 
 /**
  * An activity representing a single EmailItem detail screen. This
@@ -19,6 +30,12 @@ import android.widget.TextView;
  */
 public class EmailItemDetailActivity extends AppCompatActivity {
 
+    private String mRecipient;
+    private String mSender;
+    private String mDate;
+    private String mBody;
+    private String mId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,9 +44,8 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         TextView emailBody = (TextView)findViewById(R.id.emailitem_detail);
-
-        String body = getIntent().getStringExtra("EMAILBODY");
-        emailBody.setText(body);
+        ImageView emailImageBody = (ImageView)findViewById(R.id.email_imagedetail);
+        mId = getIntent().getStringExtra("EMAILID");
 
 
         // Show the Up button in the action bar.
@@ -37,6 +53,8 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        new GetEmailFromDBWithIdAsyncTask().execute(mId);
 
         // savedInstanceState is non-null when there is fragment state
         // saved from previous configurations of this activity
@@ -75,5 +93,41 @@ public class EmailItemDetailActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class GetEmailFromDBWithIdAsyncTask extends AsyncTask<String,Void,HashMap<String,String>>{
+        MailDatabaseOpenHelper helper;
+        HashMap<String,String> emailIdContents;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            helper = MailDatabaseOpenHelper.getInstance(EmailItemDetailActivity.this);
+            emailIdContents = new HashMap<>();
+        }
+
+        @Override
+        protected HashMap<String,String> doInBackground(String... params) {
+            String id = params[0];
+            Cursor cursor = helper.getEmailById(id);
+            emailIdContents.put("RECIPIENT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_RECIPIENT)));
+            emailIdContents.put("SENDER", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER)));
+            emailIdContents.put("BODY", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_BODY)));
+            emailIdContents.put("DATE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE)));
+            cursor.close();
+            return emailIdContents;
+        }
+
+        @Override
+        protected void onPostExecute(HashMap hashMap) {
+            mBody = hashMap.get("BODY").toString();
+            mDate = hashMap.get("DATE").toString();
+            mRecipient = hashMap.get("RECIPIENT").toString();
+            mSender = hashMap.get("SENDER").toString();
+
+
+
+
+        }
     }
 }
