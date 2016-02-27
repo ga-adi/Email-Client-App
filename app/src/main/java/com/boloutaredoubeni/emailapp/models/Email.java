@@ -1,9 +1,13 @@
 package com.boloutaredoubeni.emailapp.models;
 
+import java.io.Serializable;
+
 /**
  * Copyright 2016 Boloutare Doubeni
  */
-public class Email {
+public class Email implements Serializable {
+
+  private static final long serialVersionUID = -6099312954099962806L;
 
   private String mId;
   private String mText;

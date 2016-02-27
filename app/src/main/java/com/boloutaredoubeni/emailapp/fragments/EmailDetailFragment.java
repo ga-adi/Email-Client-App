@@ -20,13 +20,29 @@ public class EmailDetailFragment extends Fragment {
 
   private Email mEmail;
 
+  public static EmailDetailFragment newInstance(int index) {
+    EmailDetailFragment fragment = new EmailDetailFragment();
+    Bundle args = new Bundle();
+    args.putInt(InboxFragment.EMAIL_POSITION, index);
+    fragment.setArguments(args);
+
+    return fragment;
+  }
+
   public EmailDetailFragment() {}
+
+  @Override
+  public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    mEmail = (Email) getArguments().getSerializable("Email");
+  }
 
   @Nullable
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
-    View view = inflater.inflate(R.layout.fragment_email_detail, container, false);
+    View view =
+        inflater.inflate(R.layout.fragment_email_detail, container, false);
 
     if (mEmail != null) {
       ((TextView)view.findViewById(R.id.msg_txt)).setText(mEmail.getBody());
@@ -34,7 +50,5 @@ public class EmailDetailFragment extends Fragment {
     return view;
   }
 
-  public void setEmail(Email email) {
-    mEmail = email;
-  }
+  public void setEmail(Email email) { mEmail = email; }
 }

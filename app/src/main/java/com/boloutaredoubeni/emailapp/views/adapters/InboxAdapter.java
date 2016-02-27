@@ -53,7 +53,5 @@ public class InboxAdapter
     notifyDataSetChanged();
   }
 
-  public Email getEmailAt(int position) {
-    return mEmails.get(position);
-  }
+  public Email getEmailAt(int position) { return mEmails.get(position); }
 }

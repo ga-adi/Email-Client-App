@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.boloutaredoubeni.emailapp.R;
+import com.boloutaredoubeni.emailapp.fragments.EmailDetailFragment;
 import com.boloutaredoubeni.emailapp.fragments.InboxFragment;
 import com.boloutaredoubeni.emailapp.models.Email;
 import com.google.android.gms.common.ConnectionResult;
@@ -32,7 +33,7 @@ import java.util.Arrays;
  * The main activity for our email client
  */
 public class MainActivity
-    extends AppCompatActivity implements InboxFragment.OnEmailClickListener{
+    extends AppCompatActivity implements InboxFragment.OnEmailClickListener {
 
   public static final int REQUEST_ACCOUNT_PICKER = 1000;
   public static final int REQUEST_AUTHORIZATION = 1001;
@@ -73,9 +74,9 @@ public class MainActivity
       CoordinatorLayout layout =
           (CoordinatorLayout)findViewById(R.id.snackbar_layout);
       Snackbar.make(layout,
-          "Google Play Services required: "
-              + "after installing, close and relaunch this app.",
-          Snackbar.LENGTH_LONG)
+                    "Google Play Services required: "
+                        + "after installing, close and relaunch this app.",
+                    Snackbar.LENGTH_LONG)
           .show();
     }
   }
@@ -119,11 +120,20 @@ public class MainActivity
   public void onEmailSelected(Email email) {
     // TODO: start the next fragment with the email data;
     // if the screen is dual paned show the activity side by side
-    FragmentManager fm = getSupportFragmentManager();
-    FragmentTransaction ft = fm.beginTransaction();
 
-    ft.commit();
-    // else swap out the two fragments
+    if (isDualPaned()) {
+      // TODO: make sure the recycler highlights the proper item
+      FragmentManager fm = getSupportFragmentManager();
+      FragmentTransaction ft = fm.beginTransaction();
+      EmailDetailFragment detailFragment = new  EmailDetailFragment();
+      ft.replace(R.id.email_container, detailFragment);
+      ft.commit();
+    } else {
+      Intent intent = new Intent(this, EmailDetailActivity.class);
+      intent.putExtra("Email", email);
+      startActivity(intent);
+    }
+
   }
 
   private boolean isGooglePlayServicesAvailable() {
@@ -178,8 +188,11 @@ public class MainActivity
                            REQUEST_ACCOUNT_PICKER);
   }
 
-  private boolean isDualPaned() {
-
+  /**
+   * There is a separate layout for large landscape devices where the the email
+   * container is present in the view by default
+   */
+  public boolean isDualPaned() {
+    return findViewById(R.id.email_container) != null;
   }
-
 }

@@ -40,6 +40,8 @@ import java.util.ArrayList;
 public class InboxFragment extends Fragment {
 
   private OnEmailClickListener mListener;
+  private int mCurrentEmailPosition = 0;
+  static final String EMAIL_POSITION = "3m41l";
 
   private RecyclerView mRecyclerView;
   private InboxAdapter mAdapter;
@@ -63,7 +65,6 @@ public class InboxFragment extends Fragment {
                 .show();
 
             mListener.onEmailSelected(mAdapter.getEmailAt(position));
-
           }
         }));
     return view;
@@ -76,6 +77,14 @@ public class InboxFragment extends Fragment {
     LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setAdapter(mAdapter);
     mRecyclerView.setLayoutManager(layoutManager);
+
+    if (((MainActivity)getActivity()).isDualPaned()) {
+      // TODO: indicate the selected item
+      // Something like listView.setChoiceMode()
+      // TODO: update the UI to show the last selected Email or the first if
+      // there is none or noe if there are no emails
+    } else {
+    }
   }
 
   @Override
@@ -99,12 +108,26 @@ public class InboxFragment extends Fragment {
     try {
       mListener = (OnEmailClickListener)context;
     } catch (ClassCastException ex) {
-      throw new ClassCastException(context.toString() + " must implement " + OnEmailClickListener.class.getName());
+      throw new ClassCastException(context.toString() + " must implement " +
+                                   OnEmailClickListener.class.getName());
     }
   }
 
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(EMAIL_POSITION, mCurrentEmailPosition);
+  }
+
+  @Override
+  public void onDetach() {
+    super.onDetach();
+    mListener = null;
+  }
+
   /**
-   * The activity that implements this interface must send the data to the detail activity
+   * The activity that implements this interface must send the data to the
+   * detail activity
    */
   public interface OnEmailClickListener { void onEmailSelected(Email email); }
 
