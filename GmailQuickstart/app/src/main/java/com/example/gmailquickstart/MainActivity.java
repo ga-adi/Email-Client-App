@@ -199,21 +199,42 @@ public class MainActivity extends AppCompatActivity {
 
         //Fetch a list of Gmail message data attached to the specified account
         private ArrayList<Email> getDataFromApi() throws IOException {
+            //Pull full list of emails
             ListMessagesResponse list = mService.users().messages().list("me").execute();
             List<Message> messages = list.getMessages();
 
-            int subjectIndex = 5;
-
+            //Populate individual Email objects from the list of messages pulled from Gmail
             for (int i = 0; i < messages.size(); i++) {
+
+                //Retrieve Message object from each id in the list of messages
                 Message message = messages.get(i);
                 Message actual = mService.users().messages().get("me", message.getId()).execute();
+
+                //create new email object to represent the message in the app and show the subject/snippet in the RecyclerView
                 Email email = new Email();
                 email.setmEmailID(actual.getId());
                 email.setmSnippet(actual.getSnippet());
-                email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(subjectIndex).toString());
+                email.setmLabelIDs(actual.getLabelIds().toArray(email.getmLabelIDs()));
+
+                //test to confirm JSON location indices for desired Email properties
+                for (int x = 0; x < actual.getPayload().getHeaders().size(); x++) {
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("Subject")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("Date")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("From")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("To")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("Cc")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                    if(actual.getPayload().getHeaders().get(x).getName().equals("Bcc")){
+                        email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
+                }
                 EmailList.getInstance().addEmail(i, email);
             }
-            return EmailList.getInstance().getAllEmails();
+
+            return EmailList.getInstance().getInbox();
         }
 
 

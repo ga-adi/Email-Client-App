@@ -24,6 +24,30 @@ public class EmailList {
         return mEmailArrayList;
     }
 
+    public ArrayList<Email> getInbox(){
+        ArrayList<Email> inbox = new ArrayList<>();
+        for (Email email:mEmailArrayList) {
+            for(String x:email.getmLabelIDs()){
+                if(x.equals("INBOX")){
+                    inbox.add(email);
+                }
+            }
+        }
+        return inbox;
+    }
+
+    public ArrayList<Email> getSentMail(){
+        ArrayList<Email> sentMail = new ArrayList<>();
+        for (Email email:mEmailArrayList) {
+            for(String x:email.getmLabelIDs()){
+                if(x.equals("SENT")){
+                    sentMail.add(email);
+                }
+            }
+        }
+        return sentMail;
+    }
+
     public void addEmail(Email email){
         mEmailArrayList.add(email);
     }

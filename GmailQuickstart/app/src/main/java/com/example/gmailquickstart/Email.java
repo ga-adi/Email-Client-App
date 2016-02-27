@@ -5,7 +5,7 @@ package com.example.gmailquickstart;
  */
 public class Email {
     private String mEmailID;
-    private String[] mLabelIDs;
+    private String[] mLabelIDs = new String[10];
     private String mSnippet;
 
     private String mPayloadHeadersDate;
