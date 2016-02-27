@@ -9,44 +9,45 @@ import android.view.View;
 /**
  * Copyright 2016 Boloutare Doubeni
  */
-public class InboxItemClickedListener implements RecyclerView.OnItemTouchListener {
+public class InboxItemClickedListener
+    implements RecyclerView.OnItemTouchListener {
 
   private OnItemClickListener mListener;
   private GestureDetector mDetector;
 
-  public InboxItemClickedListener(Context context, OnItemClickListener listener) {
+  public InboxItemClickedListener(Context context,
+                                  OnItemClickListener listener) {
     mListener = listener;
-    mDetector = new GestureDetector(context, new GestureDetector.OnGestureListener() {
-      @Override
-      public boolean onDown(MotionEvent e) {
-        return false;
-      }
+    mDetector =
+        new GestureDetector(context, new GestureDetector.OnGestureListener() {
+          @Override
+          public boolean onDown(MotionEvent e) {
+            return false;
+          }
 
-      @Override
-      public void onShowPress(MotionEvent e) {
+          @Override
+          public void onShowPress(MotionEvent e) {}
 
-      }
+          @Override
+          public boolean onSingleTapUp(MotionEvent e) {
+            return true;
+          }
 
-      @Override
-      public boolean onSingleTapUp(MotionEvent e) {
-        return true;
-      }
+          @Override
+          public boolean onScroll(MotionEvent e1, MotionEvent e2,
+                                  float distanceX, float distanceY) {
+            return false;
+          }
 
-      @Override
-      public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        return false;
-      }
+          @Override
+          public void onLongPress(MotionEvent e) {}
 
-      @Override
-      public void onLongPress(MotionEvent e) {
-
-      }
-
-      @Override
-      public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        return false;
-      }
-    });
+          @Override
+          public boolean onFling(MotionEvent e1, MotionEvent e2,
+                                 float velocityX, float velocityY) {
+            return false;
+          }
+        });
   }
 
   @Override
@@ -59,14 +60,10 @@ public class InboxItemClickedListener implements RecyclerView.OnItemTouchListene
   }
 
   @Override
-  public void onTouchEvent(RecyclerView rv, MotionEvent e) {
-
-  }
+  public void onTouchEvent(RecyclerView rv, MotionEvent e) {}
 
   @Override
-  public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
-  }
+  public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
 
   public interface OnItemClickListener {
     void onItemClick(View view, int position);

@@ -14,17 +14,17 @@ import java.util.ArrayList;
 /**
  * Copyright 2016 Boloutare Doubeni
  */
-public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> {
+public class InboxAdapter
+    extends RecyclerView.Adapter<InboxAdapter.ViewHolder> {
 
   private ArrayList<Email> mEmails;
 
-  public InboxAdapter(ArrayList<Email> messageList) {
-    mEmails = messageList;
-  }
+  public InboxAdapter(ArrayList<Email> messageList) { mEmails = messageList; }
 
   @Override
   public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_item, null);
+    View itemView = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.message_item, null);
     return new ViewHolder(itemView);
   }
 
@@ -51,5 +51,9 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.ViewHolder> 
   public void addMessages(ArrayList<Email> messages) {
     mEmails.addAll(messages);
     notifyDataSetChanged();
+  }
+
+  public Email getEmailAt(int position) {
+    return mEmails.get(position);
   }
 }

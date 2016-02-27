@@ -17,6 +17,7 @@ import android.util.Log;
 
 import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.fragments.InboxFragment;
+import com.boloutaredoubeni.emailapp.models.Email;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -27,8 +28,11 @@ import java.util.Arrays;
 
 /**
  * Copyright 2016 Boloutare Doubeni
+ *
+ * The main activity for our email client
  */
-public class MainActivity extends AppCompatActivity implements InboxFragment.OnEmailClickListener {
+public class MainActivity
+    extends AppCompatActivity implements InboxFragment.OnEmailClickListener{
 
   public static final int REQUEST_ACCOUNT_PICKER = 1000;
   public static final int REQUEST_AUTHORIZATION = 1001;
@@ -56,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
     FragmentManager manager = getSupportFragmentManager();
     FragmentTransaction transaction = manager.beginTransaction();
     InboxFragment inboxFragment = new InboxFragment();
-    transaction.add(R.id.inbox_container, inboxFragment, "inboxfrag");
+    transaction.add(R.id.inbox_container, inboxFragment);
     transaction.commit();
   }
 
@@ -69,23 +73,13 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
       CoordinatorLayout layout =
           (CoordinatorLayout)findViewById(R.id.snackbar_layout);
       Snackbar.make(layout,
-                    "Google Play Services required: "
-                        + "after installing, close and relaunch this app.",
-                    Snackbar.LENGTH_LONG)
+          "Google Play Services required: "
+              + "after installing, close and relaunch this app.",
+          Snackbar.LENGTH_LONG)
           .show();
     }
   }
 
-  /**
-   * Called when an activity launched here (specifically, AccountPicker
-   * and authorization) exits, giving you the requestCode you started it with,
-   * the resultCode it returned, and any additional data from it.
-   * @param requestCode code indicating which activity result is incoming.
-   * @param resultCode code indicating the result of the incoming
-   *     activity result.
-   * @param data Intent (containing result data) returned by incoming
-   *     activity result.
-   */
   @Override
   protected void onActivityResult(int requestCode, int resultCode,
                                   Intent data) {
@@ -121,6 +115,17 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
     super.onActivityResult(requestCode, resultCode, data);
   }
 
+  @Override
+  public void onEmailSelected(Email email) {
+    // TODO: start the next fragment with the email data;
+    // if the screen is dual paned show the activity side by side
+    FragmentManager fm = getSupportFragmentManager();
+    FragmentTransaction ft = fm.beginTransaction();
+
+    ft.commit();
+    // else swap out the two fragments
+  }
+
   private boolean isGooglePlayServicesAvailable() {
     final int connectionStatusCode =
         GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
@@ -132,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
     }
     return true;
   }
-
 
   public void showGooglePlayServicesAvailabilityErrorDialog(
       final int connectionStatusCode) {
@@ -174,8 +178,8 @@ public class MainActivity extends AppCompatActivity implements InboxFragment.OnE
                            REQUEST_ACCOUNT_PICKER);
   }
 
-  @Override
-  public void setEmail(String emailID) {
+  private boolean isDualPaned() {
 
   }
+
 }

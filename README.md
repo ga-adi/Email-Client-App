@@ -2,4 +2,4 @@
 
 ### TODO
 
-1. Configure InboxFragment
+1. Configure Email Detail Fragment

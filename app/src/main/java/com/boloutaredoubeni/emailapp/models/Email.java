@@ -13,7 +13,5 @@ public class Email {
     mText = body;
   }
 
-  public String getBody() {
-    return mText;
-  }
+  public String getBody() { return mText; }
 }

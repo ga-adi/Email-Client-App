@@ -51,16 +51,21 @@ public class InboxFragment extends Fragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
-    View view =  inflater.inflate(R.layout.inbox_fragment, container, false);
-    mProgressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
-    mRecyclerView = (RecyclerView) view.findViewById(R.id.inbox_recycler);
-    mRecyclerView.addOnItemTouchListener(new InboxItemClickedListener(getContext(), new InboxItemClickedListener.OnItemClickListener() {
-      @Override
-      public void onItemClick(View view, int position) {
-        // TODO: Move to next fragment
-        Toast.makeText(getContext(), "Clicked on Item", Toast.LENGTH_SHORT).show();
-      }
-    }));
+    View view = inflater.inflate(R.layout.fragment_inbox, container, false);
+    mProgressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
+    mRecyclerView = (RecyclerView)view.findViewById(R.id.inbox_recycler);
+    mRecyclerView.addOnItemTouchListener(new InboxItemClickedListener(
+        getContext(), new InboxItemClickedListener.OnItemClickListener() {
+          @Override
+          public void onItemClick(View view, int position) {
+            // TODO: Move to next fragment
+            Toast.makeText(getContext(), "Clicked on Item", Toast.LENGTH_SHORT)
+                .show();
+
+            mListener.onEmailSelected(mAdapter.getEmailAt(position));
+
+          }
+        }));
     return view;
   }
 
@@ -92,14 +97,20 @@ public class InboxFragment extends Fragment {
   public void onAttach(Context context) {
     super.onAttach(context);
     try {
-      mListener = (OnEmailClickListener)getActivity();
+      mListener = (OnEmailClickListener)context;
     } catch (ClassCastException ex) {
-      ex.printStackTrace();
+      throw new ClassCastException(context.toString() + " must implement " + OnEmailClickListener.class.getName());
     }
   }
 
-  public interface OnEmailClickListener { void setEmail(String emailID); }
+  /**
+   * The activity that implements this interface must send the data to the detail activity
+   */
+  public interface OnEmailClickListener { void onEmailSelected(Email email); }
 
+  /**
+   * An AsyncTask that retrieves the data from the GMail API
+   */
   private class MessageTask extends AsyncTask<Void, Void, ArrayList<Email>> {
     private com.google.api.services.gmail.Gmail mService = null;
     private Exception mLastError = null;
@@ -165,25 +176,12 @@ public class InboxFragment extends Fragment {
 
       ListMessagesResponse response =
           mService.users().messages().list(user).execute();
-
-//      while (response.getMessages() != null) {
-        messages.addAll(response.getMessages());
-        // Move to the next page and get the messages
-//        if (response.getNextPageToken() != null) {
-//          String pageToken = response.getNextPageToken();
-//          response = mService.users()
-//                         .messages()
-//                         .list(user)
-//                         .setPageToken(pageToken)
-//                         .execute();
-//        } else {
-//          break;
-//        }
-//      }
+      messages.addAll(response.getMessages());
 
       for (final Message message : messages) {
         String id = message.getId();
-        Message msg = mService.users().messages().get(user, message.getId()).execute();
+        Message msg =
+            mService.users().messages().get(user, message.getId()).execute();
         emails.add(new Email(id, msg.getSnippet()));
       }
 
