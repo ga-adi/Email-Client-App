@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView.LayoutManager mRecyclerViewLayoutManager;
 
     //scopes updated for Read/write permissions
-    private static final String[] SCOPES = { GmailScopes.GMAIL_LABELS,GmailScopes.GMAIL_READONLY,GmailScopes.GMAIL_COMPOSE };
+    private static final String[] SCOPES = {GmailScopes.GMAIL_LABELS,GmailScopes.GMAIL_READONLY,GmailScopes.GMAIL_COMPOSE,GmailScopes.MAIL_GOOGLE_COM,GmailScopes.GMAIL_INSERT,GmailScopes.GMAIL_MODIFY};
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     private static final String PREF_ACCOUNT_NAME = "stringKey";
@@ -188,7 +188,8 @@ public class MainActivity extends AppCompatActivity {
         //Background task to call Gmail API
         @Override
         protected ArrayList<Email> doInBackground(Void... params) {
-            try {return getDataFromApi();
+            try {
+                return getDataFromApi();
             } catch (Exception e) {
                 mLastError = e;
                 cancel(true);
@@ -198,37 +199,27 @@ public class MainActivity extends AppCompatActivity {
 
         //Fetch a list of Gmail message data attached to the specified account
         private ArrayList<Email> getDataFromApi() throws IOException {
-            //List<String> strings = new ArrayList<String>();
             ListMessagesResponse list = mService.users().messages().list("me").execute();
-            int subjectIndex = 0;
+            List<Message> messages = list.getMessages();
 
-            for (int i = 0; i < list.getMessages().size(); i++) {
+            int subjectIndex = 5;
 
-                Message message = list.getMessages().get(i);
-                for (int x = 0; x < message.getPayload().getHeaders().size(); x++) {
-                    if(message.getPayload().getHeaders().get(x).getName().equals("Subject")){subjectIndex=x;}
-                }
-
+            for (int i = 0; i < messages.size(); i++) {
+                Message message = messages.get(i);
+                Message actual = mService.users().messages().get("me", message.getId()).execute();
                 Email email = new Email();
-                email.setmEmailID(message.getId());
-                email.setmSnippet(message.get("snippet").toString());
-                email.setmPayloadHeadersSubject(message.getPayload().getHeaders().get(subjectIndex).toString());
+                email.setmEmailID(actual.getId());
+                email.setmSnippet(actual.getSnippet());
+                email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(subjectIndex).toString());
                 EmailList.getInstance().addEmail(i, email);
             }
             return EmailList.getInstance().getAllEmails();
         }
 
+
         @Override
         protected void onPostExecute(ArrayList<Email> output) {
             mEmailAdapter.notifyDataSetChanged();
-            try{
-                ListMessagesResponse list = mService.users().messages().list("me").execute();
-                Message message = list.getMessages().get(0);
-                mOutputText.setText(message.getId());
-            }
-            catch(IOException e){
-                e.printStackTrace();
-            }
         }
 
         @Override
@@ -240,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
                 else if (mLastError instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(((UserRecoverableAuthIOException) mLastError).getIntent(),MainActivity.REQUEST_AUTHORIZATION);}
                 else {mOutputText.setText("The following error occurred:\n" + mLastError.getMessage());}}
-
             else {mOutputText.setText("Request cancelled.");}
         }
     }
