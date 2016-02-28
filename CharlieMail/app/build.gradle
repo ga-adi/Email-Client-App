@@ -36,5 +36,7 @@ dependencies {
     compile('com.google.apis:google-api-services-gmail:v1-rev29-1.20.0') {
         exclude group: 'org.apache.httpcomponents'
     }
-    compile 'com.sun.mail:javax.mail:1.5.5'
+    compile files('libs/activation.jar')
+    compile files('libs/additionnal.jar')
+    compile files('libs/mail.jar')
 }

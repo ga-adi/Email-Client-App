@@ -106,7 +106,7 @@ public class EmailListFragment extends Fragment {
         return rootView;
     }
 
-    private class GetEmailListAsyncTask extends AsyncTask<Void, Void, List<String>> {
+    private class GetEmailListAsyncTask extends AsyncTask<Void, Void, Boolean> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
 
@@ -126,41 +126,43 @@ public class EmailListFragment extends Fragment {
         }
 
         @Override
-        protected List<String> doInBackground(Void... params) {
+        protected Boolean doInBackground(Void... params) {
             try {
-                return getDataFromApi();
+                List<MimeMessage> emails = getDataFromApi();
+                mEmails.clear();
+                if (emails != null) {
+                    for (MimeMessage email : emails) {
+                        mEmails.add(new Email(email));
+                    }
+                }
+                return true;
             } catch (Exception e) {
                 mLastError = e;
                 Log.e("EmailListFragment", e.getMessage());
                 e.printStackTrace();
                 cancel(true);
-                return null;
+                return false;
             }
         }
 
         @Override
-        protected void onPostExecute(List<String> emails) {
-            super.onPostExecute(emails);
+        protected void onPostExecute(Boolean dataRetrieved) {
+            super.onPostExecute(dataRetrieved);
 
             fadeOutProgressBar(1000);
-
-            mEmails.clear();
-            if (emails != null) {
-                for (String email : emails) {
-                    mEmails.add(new Email(email));
-                }
+            if (dataRetrieved) {
+                mAdapter.notifyDataSetChanged();
             }
-
-            mAdapter.notifyDataSetChanged();
         }
 
-        private List<String> getDataFromApi() throws IOException {
+        private List<MimeMessage> getDataFromApi() throws IOException {
             String userId = "me"; // special value - indicates authenticated user
 
-            ArrayList<String> emails = new ArrayList<>();
+            ArrayList<MimeMessage> mimeMessages = new ArrayList<>();
             ListMessagesResponse responses = mService.users().messages()
                     .list(userId).setLabelIds(mLabels).execute();
 
+            //TODO - limit # of emails - batching?
             if (responses.getMessages() != null) {
                 for (Message response : responses.getMessages()) {
 
@@ -171,15 +173,15 @@ public class EmailListFragment extends Fragment {
                     Session session = Session.getDefaultInstance(props, null);
 
                     try {
-                        MimeMessage email = new MimeMessage(session, new ByteArrayInputStream(emailBytes));
-                        emails.add(email.getSubject());
+                        MimeMessage mimeMessage = new MimeMessage(session, new ByteArrayInputStream(emailBytes));
+                        mimeMessages.add(mimeMessage);
                     } catch (MessagingException e) {
                         Log.e("EmailListFragment", e.getMessage());
                         e.printStackTrace();
                     }
                 }
             }
-            return emails;
+            return mimeMessages;
         }
 
         @Override
