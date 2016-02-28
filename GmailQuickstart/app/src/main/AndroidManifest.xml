@@ -35,7 +35,8 @@
         <activity
             android:name=".ComposeEmailActivity"
             android:label="@string/title_activity_compose_email"
-            android:theme="@style/AppTheme"></activity>
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme"/>
     </application>
 
 </manifest>

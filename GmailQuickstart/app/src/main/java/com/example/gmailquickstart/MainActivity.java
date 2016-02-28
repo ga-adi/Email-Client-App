@@ -29,6 +29,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -36,9 +37,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -48,12 +51,12 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     GoogleAccountCredential mCredential;
-    private TextView mOutputText;
     private Toolbar mToolbar;
     private ActionBar mActionbar;
     private EmailAdapter mEmailAdapter;
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mRecyclerViewLayoutManager;
+    private FloatingActionButton mFAB;
     public SharedPreferences settings;
 
     //scopes updated for Read/write permissions
@@ -69,15 +72,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity_phone);
 
-        // Initialize credentials and service object
-        settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
-        mCredential = GoogleAccountCredential.usingOAuth2(
-                getApplicationContext(), Arrays.asList(SCOPES))
-                .setBackOff(new ExponentialBackOff())
-                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
-
         //Create Layout elements
-        mOutputText = (TextView)findViewById(R.id.xmlTextView);
+        mRecyclerView = (RecyclerView) findViewById(R.id.xmlRecyclerView);
+        mFAB = (FloatingActionButton)findViewById(R.id.xmlMainfab);
         mToolbar = (Toolbar)findViewById(R.id.xmlActionBar);
         setSupportActionBar(mToolbar);
         mActionbar = getSupportActionBar();
@@ -85,22 +82,36 @@ public class MainActivity extends AppCompatActivity {
         mActionbar.setDisplayHomeAsUpEnabled(true);
         mActionbar.setHomeButtonEnabled(true);
 
-        //Instantiate List of Email Objects
+        // Initialize credentials and service object
+        settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
+        mCredential = GoogleAccountCredential.usingOAuth2(
+                getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff())
+                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+
+        //Instantiate List of Email Objects in RecyclerView via custom adapter
         mEmailAdapter = new EmailAdapter(EmailList.getInstance().getAllEmails());
-        mRecyclerView = (RecyclerView) findViewById(R.id.xmlRecyclerView);
         mRecyclerViewLayoutManager = new LinearLayoutManager(MainActivity.this);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mRecyclerViewLayoutManager);
         mRecyclerView.setAdapter(mEmailAdapter);
 
-        //Add FAB to launch compose email screen**************************
+        //Floating action button launches compose email screen
+        mFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,ComposeEmailActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (isGooglePlayServicesAvailable()) {refreshResults();}
-        else {mOutputText.setText("Google Play Services required: " + "after installing, close and relaunch this app.");}
+        else {Toast.makeText(MainActivity.this, "\"Google Play Services required: \"" +
+                "+ \"after installing, close and relaunch this app.\"", Toast.LENGTH_SHORT).show();}
     }
 
     @Override
@@ -119,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
                         SharedPreferences.Editor editor = settings.edit();
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();}
-                } else if (resultCode == RESULT_CANCELED) {mOutputText.setText("Account unspecified.");}
+                } else if (resultCode == RESULT_CANCELED) {
+                    Toast.makeText(MainActivity.this, "Account unspecified.", Toast.LENGTH_SHORT).show();}
                 break;
             case REQUEST_AUTHORIZATION:
                 if (resultCode != RESULT_OK) {chooseAccount();}
@@ -137,7 +149,9 @@ public class MainActivity extends AppCompatActivity {
         if (mCredential.getSelectedAccountName() == null) {chooseAccount();}
         else {
             if (isDeviceOnline()) {new MakeRequestTask(mCredential).execute();}
-            else {mOutputText.setText("No network connection available.");}
+            else {
+                Toast.makeText(MainActivity.this, "No network connection available.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -248,8 +262,11 @@ public class MainActivity extends AppCompatActivity {
                             ((GooglePlayServicesAvailabilityIOException) mLastError).getConnectionStatusCode());}
                 else if (mLastError instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(((UserRecoverableAuthIOException) mLastError).getIntent(),MainActivity.REQUEST_AUTHORIZATION);}
-                else {mOutputText.setText("The following error occurred:\n" + mLastError.getMessage());}}
-            else {mOutputText.setText("Request cancelled.");}
+                else {
+                    Toast.makeText(MainActivity.this, "The following error occurred:\n"+ mLastError.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+            else {Toast.makeText(MainActivity.this, "Request cancelled.", Toast.LENGTH_SHORT).show();}
         }
     }
 }

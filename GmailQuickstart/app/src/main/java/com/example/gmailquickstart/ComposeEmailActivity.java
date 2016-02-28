@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.services.gmail.model.MessagePart;
 
@@ -32,25 +33,29 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 
 public class ComposeEmailActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private ActionBar mActionBar;
-    private TextView mDate;
     private EditText mTo,mCC,mBcc,mSubject,mBody;
     private com.google.api.services.gmail.Gmail mService;
     private GoogleAccountCredential mCredential;
     private FloatingActionButton mFab;
     SharedPreferences mSettings;
-    private Message mMessage;
+    private MimeMessage mMessage;
+    private String mEmailTo,mEmailCC,mEmailBCC,mEmailDate,mEmailSubject,mEmailBody;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compose_email);
 
-        mDate = (TextView) findViewById(R.id.xmlComposeDate);
         mCC = (EditText) findViewById(R.id.xmlComposeCC);
         mBcc = (EditText) findViewById(R.id.xmlComposeBCC);
         mTo = (EditText) findViewById(R.id.xmlComposeTo);
@@ -61,7 +66,10 @@ public class ComposeEmailActivity extends AppCompatActivity {
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         mActionBar = getSupportActionBar();
+        mActionBar.setDisplayHomeAsUpEnabled(true);
+        mActionBar.setHomeButtonEnabled(true);
         mActionBar.setTitle("Compose Email");
+
 
         mSettings = getSharedPreferences(MainActivity.SHARED_PREFS, Context.MODE_PRIVATE);
 
@@ -83,9 +91,11 @@ public class ComposeEmailActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
-            Date date = new Date();
-            mDate.setText(simpleDateFormat.format(date));
+            mEmailTo = mTo.getText().toString();
+            mEmailCC = mCC.getText().toString();
+            mEmailBCC = mBcc.getText().toString();
+            mEmailSubject = mSubject.getText().toString();
+            mEmailBody = mBody.getText().toString();
         }
 
         @Override
@@ -95,33 +105,12 @@ public class ComposeEmailActivity extends AppCompatActivity {
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.gmail.Gmail.Builder(transport, jsonFactory, mCredential).setApplicationName("Gmail API Android Quickstart").build();
 
-            mMessage = new Message();
-            mMessage.setLabelIds();
+            //Code to create a new Message and send it as an email
             try{
-                mMessage = mService.users().messages().get(mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,"me"), mEmail.getmEmailID()).execute();
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-
-            //Code to pull email body and decode into readable text
-            StringBuilder sb = new StringBuilder();
-                if(mMessage.getPayload().getMimeType().contains("multipart")){
-                    for(MessagePart part : mMessage.getPayload().getParts()){
-                        if(part.getMimeType().contains("multipart")){
-                            for(MessagePart partII : part.getParts()){
-                                if(partII.getMimeType().equals("text/plain")){
-                                    sb.append(new String(Base64.decodeBase64(partII.getBody().getData())));
-                                }
-                            }
-                        } else if (part.getMimeType().equals("text/plain")){
-                            sb.append(new String (Base64.decodeBase64(part.getBody().getData())));
-                        }
-                    }
-                } else {
-                    sb.append(new String (Base64.decodeBase64(mMessage.getPayload().getBody().getData())));
-                }
-                String body = sb.toString();
-                mEmail.setmPayloadPartsBodyData(body);
+                mMessage = createEmail(mEmailTo,mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,""),mEmailSubject,mEmailBody);
+                sendMessage(mService,mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,""),mMessage);}
+            catch(MessagingException e){e.printStackTrace();}
+            catch(IOException e){e.printStackTrace();}
 
             return null;
         }
@@ -135,20 +124,19 @@ public class ComposeEmailActivity extends AppCompatActivity {
     }
 
     private void setUpReplyContent(){
-        if(!getIntent().getStringExtra(EmailAdapter.EMAIL_SUBJECT).isEmpty()){
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_SUBJECT)){
             String subject = "Re: " + getIntent().getStringExtra(EmailAdapter.EMAIL_SUBJECT);
             mSubject.setText(subject);}
-        if(!getIntent().getStringExtra(EmailAdapter.EMAIL_CC).isEmpty()){
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_CC)){
             mCC.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_CC));}
-        if(!getIntent().getStringExtra(EmailAdapter.EMAIL_TO).isEmpty()){
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_TO)){
             mTo.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_TO));}
-        if(!getIntent().getStringExtra(EmailAdapter.EMAIL_BODY).isEmpty()){
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_BODY)){
             String body = "\n\n------------------\n" + getIntent().getStringExtra(EmailAdapter.EMAIL_BODY);
             mBody.setText(body);}
     }
 
-    public static MimeMessage createEmail(String to, String from, String subject,
-                                          String bodyText) throws MessagingException {
+    public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
 
@@ -157,11 +145,25 @@ public class ComposeEmailActivity extends AppCompatActivity {
         InternetAddress fAddress = new InternetAddress(from);
 
         email.setFrom(new InternetAddress(from));
-        email.addRecipient(javax.mail.Message.RecipientType.TO,
-                new InternetAddress(to));
+        email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
         email.setSubject(subject);
         email.setText(bodyText);
+        email.setSentDate(new Date());
         return email;
+    }
+
+    public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        email.writeTo(bytes);
+        String encodedEmail = Base64.encodeBase64URLSafeString(bytes.toByteArray());
+        Message message = new Message();
+        message.setRaw(encodedEmail);
+        return message;
+    }
+
+    public static void sendMessage(Gmail service, String userId, MimeMessage email) throws MessagingException, IOException {
+        Message message = createMessageWithEmail(email);
+        service.users().messages().send(userId, message).execute();
     }
 
 }

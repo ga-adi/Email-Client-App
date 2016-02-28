@@ -33,5 +33,5 @@ dependencies {
     compile('com.google.apis:google-api-services-gmail:v1-rev29-1.20.0') {
         exclude group: 'org.apache.httpcomponents'
     }
-
+    compile 'javax.mail:javax.mail-api:1.5.5'
 }

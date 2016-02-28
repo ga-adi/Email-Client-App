@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
                     android:gravity="start"
-                    android:hint="Enter recipients here..."/>
+                    android:hint="Enter recipients... (address@host.com)"/>
             </LinearLayout>
         </android.support.v7.widget.CardView>
         <android.support.v7.widget.CardView
@@ -71,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
                     android:gravity="start"
-                    android:hint="Enter CC recipients here..."/>
+                    android:hint="Enter recipients... (address@host.com)"/>
             </LinearLayout>
         </android.support.v7.widget.CardView>
         <android.support.v7.widget.CardView
@@ -100,35 +100,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start"
                     android:gravity="start"
-                    android:hint="Enter Bcc recipients here..."/>
-            </LinearLayout>
-        </android.support.v7.widget.CardView>
-        <android.support.v7.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="7dp"
-            app:cardCornerRadius="13dp"
-            app:cardElevation="5dp"
-            app:cardBackgroundColor="#ffffff"
-            app:cardPreventCornerOverlap="true"
-            android:contentDescription="This is the Email Date">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="7dp"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:textStyle="bold"
-                    android:text="Date: "/>
-                <TextView
-                    android:id="@+id/xmlComposeDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:gravity="start"/>
+                    android:hint="Enter recipients... (address@host.com)"/>
             </LinearLayout>
         </android.support.v7.widget.CardView>
         <android.support.v7.widget.CardView
