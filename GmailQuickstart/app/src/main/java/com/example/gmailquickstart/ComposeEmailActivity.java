@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -63,13 +64,17 @@ public class ComposeEmailActivity extends AppCompatActivity {
         mBody = (EditText) findViewById(R.id.xmlComposeBody);
         mFab = (FloatingActionButton) findViewById(R.id.fab);
 
+        //alters keyboard type for email addresses
+        mTo.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        mCC.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        mBcc.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         mActionBar = getSupportActionBar();
         mActionBar.setDisplayHomeAsUpEnabled(true);
         mActionBar.setHomeButtonEnabled(true);
         mActionBar.setTitle("Compose Email");
-
 
         mSettings = getSharedPreferences(MainActivity.SHARED_PREFS, Context.MODE_PRIVATE);
 
@@ -123,6 +128,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
         }
     }
 
+    //Method to pull reply information from intent, if responding to a previous email
     private void setUpReplyContent(){
         if(getIntent().hasExtra(EmailAdapter.EMAIL_SUBJECT)){
             String subject = "Re: " + getIntent().getStringExtra(EmailAdapter.EMAIL_SUBJECT);
@@ -136,6 +142,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
             mBody.setText(body);}
     }
 
+    //Method to take user inputs and create a MimeMessage Object
     public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
@@ -144,14 +151,15 @@ public class ComposeEmailActivity extends AppCompatActivity {
         InternetAddress tAddress = new InternetAddress(to);
         InternetAddress fAddress = new InternetAddress(from);
 
-        email.setFrom(new InternetAddress(from));
-        email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
+        email.setFrom(fAddress);
+        email.addRecipient(javax.mail.Message.RecipientType.TO, tAddress);
         email.setSubject(subject);
         email.setText(bodyText);
         email.setSentDate(new Date());
         return email;
     }
 
+    //Method to encode the MimeMessage object into a Gmail object
     public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         email.writeTo(bytes);
@@ -161,9 +169,10 @@ public class ComposeEmailActivity extends AppCompatActivity {
         return message;
     }
 
+    //Method to take the newly constructed Gmail object and send via gmail
     public static void sendMessage(Gmail service, String userId, MimeMessage email) throws MessagingException, IOException {
         Message message = createMessageWithEmail(email);
-        service.users().messages().send(userId, message).execute();
+        Message result = service.users().messages().send(userId, message).execute();
     }
 
 }

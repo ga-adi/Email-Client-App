@@ -37,6 +37,9 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -78,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
         mToolbar = (Toolbar)findViewById(R.id.xmlActionBar);
         setSupportActionBar(mToolbar);
         mActionbar = getSupportActionBar();
-        mActionbar.setTitle("KwonMail");
         mActionbar.setDisplayHomeAsUpEnabled(true);
         mActionbar.setHomeButtonEnabled(true);
 
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff())
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+        mActionbar.setTitle(settings.getString(MainActivity.PREF_ACCOUNT_NAME,""));
 
         //Instantiate List of Email Objects in RecyclerView via custom adapter
         mEmailAdapter = new EmailAdapter(EmailList.getInstance().getAllEmails());
@@ -268,5 +271,27 @@ public class MainActivity extends AppCompatActivity {
             }
             else {Toast.makeText(MainActivity.this, "Request cancelled.", Toast.LENGTH_SHORT).show();}
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuinflater = getMenuInflater();
+        menuinflater.inflate(R.menu.options_menu,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    //Options menu click prompts user to change accounts
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id){
+            case R.id.action_changeAccount:
+                chooseAccount();
+                EmailList.getInstance().getAllEmails().clear();
+                mEmailAdapter.notifyDataSetChanged();
+                refreshResults();
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
