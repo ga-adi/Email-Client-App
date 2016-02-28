@@ -17,6 +17,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+
+    }
 }
 
 dependencies {
@@ -28,11 +34,17 @@ dependencies {
     compile('com.google.apis:google-api-services-gmail:v1-rev29-1.20.0') {
         exclude group: 'org.apache.httpcomponents'
     }
-
     compile 'com.android.support:appcompat-v7:23.2.0'
     compile 'com.google.android.gms:play-services-identity:7.8.0'
-    compile 'javax.mail:javax.mail-api:1.5.5'
+    //    compile 'javax.mail:javax.mail-api:1.5.5'
     compile 'com.android.support:support-v4:23.2.0'
     compile 'com.android.support:recyclerview-v7:23.2.0'
     compile 'com.android.support:design:23.2.0'
+    //    compile files ('Libs/activation.jar')
+    //    compile files ('Libs/additional.jar')
+    //    compile files ('Libs/mail.jar')
+    //compile 'com.sun.mail:javax.mail:1.5.5'
+    compile files('/Users/nat/Networking-in-Android/emailApp/GmailQuickStart/Libs/activation.jar')
+    compile files('/Users/nat/Networking-in-Android/emailApp/GmailQuickStart/Libs/additionnal.jar')
+    compile files('/Users/nat/Networking-in-Android/emailApp/GmailQuickStart/Libs/mail.jar')
 }

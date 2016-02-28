@@ -6,12 +6,22 @@ import java.util.ArrayList;
  * Created by nat on 2/26/16.
  */
 public class Email {
-    String mSnippet;
-    String mTheID;
-    String mSubject;
-    String mBodyData;
-    ArrayList<String> mToData;
-    String mFromData;
+    private String mSnippet;
+    private String mTheID;
+    private String mSubject;
+    private String mBodyData;
+    private ArrayList<String> mToData;
+    private String mFromData;
+
+    public boolean isDraft() {
+        return mIsDraft;
+    }
+
+    public void setIsDraft(boolean isDraft) {
+        mIsDraft = isDraft;
+    }
+
+    private boolean mIsDraft;
 
 
     public ArrayList<String> getToData() {

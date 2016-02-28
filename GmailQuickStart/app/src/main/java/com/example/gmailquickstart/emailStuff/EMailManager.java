@@ -87,6 +87,7 @@ public class EMailManager {
     public ArrayList<Email>getAllEmails(){
         return mEmails;
     }
+
     public void printAllToLog(){
         if(mEmails.size()==0){
             Log.d("PRINT NO EMAILS","no emails here");

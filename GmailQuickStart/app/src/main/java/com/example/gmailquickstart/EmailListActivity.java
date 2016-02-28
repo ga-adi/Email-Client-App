@@ -65,7 +65,7 @@ public class EmailListActivity extends AppCompatActivity {
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
-    static final int COMPOSE_EMAIL=1003;
+    public static final int COMPOSE_EMAIL=1003;
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { GmailScopes.GMAIL_LABELS,GmailScopes.GMAIL_READONLY,GmailScopes.GMAIL_COMPOSE };
 
@@ -157,6 +157,14 @@ public class EmailListActivity extends AppCompatActivity {
             int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
+            case COMPOSE_EMAIL:
+                if(resultCode==RESULT_OK & data!=null){
+                    boolean result = data.getBooleanExtra("RESULT_OF_COMPOSE",false);
+                    if(result==false){
+                        Toast.makeText(EmailListActivity.this,"Message could not be sent or saved as a draft successfully",Toast.LENGTH_LONG).show();
+                    }
+                }
+                break;
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
                     isGooglePlayServicesAvailable();
@@ -395,11 +403,7 @@ public class EmailListActivity extends AppCompatActivity {
             String user = "me";
             List<String> labels = new ArrayList<String>();
 
-            //labels
-            /*ListLabelsResponse listResponse = mService.users().labels().list(user).execute();
-            for (Label label : listResponse.getLabels()) {
-                labels.add(label.getName());
-            }*/
+
 
             //get message id
             ArrayList<String> theLabels = new ArrayList<>();
@@ -411,21 +415,10 @@ public class EmailListActivity extends AppCompatActivity {
 
             EMailManager emailManager =  EMailManager.getInstance();
             emailManager.startUpdate();
-            StringBuilder builder = new StringBuilder();
-            String body2=" ";
-            String bod=" ";
+
             for (Message message : response.getMessages()) {
 
                 Message actualMessage = mService.users().messages().get(user, message.getId()).execute();
-
-
-
-
-
-
-                Log.d("EmalListActivity"," body "+bod);
-                //actualMessage.getPayload().getBody();
-                //Log.d("MainActivity", "stuff: " + actualMessage.getPayload().getHeaders());
                 ArrayList<MessagePartHeader> headerContainer = (ArrayList) actualMessage.getPayload().getHeaders();
                 String emailSubject=" ";
                 String emailTo="";
@@ -466,25 +459,11 @@ public class EmailListActivity extends AppCompatActivity {
 
                     }
 
-                    //Log.d("EmailListActivity","MessagePart "+m.getPartId()+" "+m.getMimeType());
 
-                    //MessagePartBody body = m.getBody();
-                    //if(body==null){
-                    //    continue;
-                    //}
-                    //byte[] data=body.decodeData();
-
-                    //String encodedData = body.getData();
-                   // byte[] data = Base64.decodeBase64(encodedData);
-                    //String result = new String(Base64.decodeBase64(encodedData));
-                  // String content=new String(data);
-                   // Log.d("EmailListActivity","the content "+content);
 
 
                 }
-               // byte[] b = actualMessage.decodeRaw();
-                //String str = new String(b, Charset.forName("UTF-8"));
-                //Log.d("MainActivity",str);
+
 
                 Email newEmail = new Email();
                 newEmail.setSnippet(actualMessage.getSnippet());
@@ -501,13 +480,7 @@ public class EmailListActivity extends AppCompatActivity {
             }
             emailManager.endUpdate();
 
-            //send email
-            //Gmail service, String from, List<String> to, String title, String body
-            //ArrayList<String>toPerson =  new ArrayList<>();
-            //toPerson.add("wctygret@gmail.com");
-            //sendMail(mService,"nat2014111@gmail.com",toPerson,"TEST","This is the body of the email");
-            //RecyclerView recyclerView = (RecyclerView)emailListActivity.this.findViewById(R.id.email_list);
-            //recyclerView.setAdapter();
+
             return labels;
         }
 
