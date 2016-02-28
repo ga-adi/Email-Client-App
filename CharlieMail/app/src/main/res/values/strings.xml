@@ -2,4 +2,8 @@
     <string name="app_name">Charlie Mail</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_detail">DetailActivity</string>
+
+    <string name="detail_to">To: %s</string>
+    <string name="detail_from">From: %s</string>
+    <string name="detail_cc">CC: %s</string>
 </resources>
