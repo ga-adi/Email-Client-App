@@ -1,5 +1,6 @@
 package com.example.mom.clothtalk;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -38,6 +39,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -86,12 +88,23 @@ public class MainActivity extends AppCompatActivity {
         mEmailsListView = (ListView) findViewById(R.id.emails_ListView);
         mInboxArrayList = new ArrayList<String>();
 
+        mEmailsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent= new Intent(MainActivity.this,DetailActivity.class);
+                Object o= mEmailsListView.getItemAtPosition(position);
+                String email= o.toString();
+                Toast.makeText(MainActivity.this,"You have selected "+ email,Toast.LENGTH_SHORT).show();
+            }
+        });
+
 
         mAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, mInboxArrayList);
         mEmailsListView.setAdapter(mAdapter);
 
         MailAsyncTask mailAsyncTask = new MailAsyncTask(mCredential);
         mailAsyncTask.execute();
+
         SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
 
 
@@ -215,6 +228,14 @@ public class MainActivity extends AppCompatActivity {
         return stringBuilder.toString();
     }
 
+    public void OnEmailSelected(String selectedEmail){
+        if(getResources().getConfiguration().orientation== Configuration.ORIENTATION_PORTRAIT){
+            Intent intent= new Intent(MainActivity.this,DetailActivity.class);
+            intent.putExtra("email",selectedEmail);
+            startActivity(intent);
+        }
+    }
+
     public class MailAsyncTask extends AsyncTask<String,Void, List<String>>{
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
@@ -255,17 +276,16 @@ public class MainActivity extends AppCompatActivity {
             for (Label label : listResponse.getLabels()) {
                 labels.add(label.getName());
                 String labelName = label.getName();
-//                mInboxArrayList.add(labelName);
-//                Log.d("String", label.getName());
+
             }
             int counter = 0;
             for (com.google.api.services.gmail.model.Message message : messageResponse.getMessages()) {
-//                Log.d("Sincerely is it?", "Gonna stop here?");
+
                 counter++;
                 com.google.api.services.gmail.model.Message messageContent = mService.users().messages().get("me", message.getId()).execute();
                 String s = messageContent.getSnippet();
                 mInboxArrayList.add(s);
-                if (counter >= 10) {
+                if (counter >= 25) {
                     break;
                 }
             }

@@ -12,10 +12,11 @@
     tools:context="com.example.mom.clothtalk.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
+    <ListView
+        android:id="@+id/emails_ListView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_height="wrap_content">
 
+    </ListView>
 
 </RelativeLayout>
