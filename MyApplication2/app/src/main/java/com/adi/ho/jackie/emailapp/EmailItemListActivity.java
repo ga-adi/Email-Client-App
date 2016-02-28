@@ -12,6 +12,8 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,12 +26,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.adi.ho.jackie.emailapp.Fragments.ComposeFragment;
 import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
 import com.adi.ho.jackie.emailapp.dummy.DummyContent;
+import com.adi.ho.jackie.emailapp.recyclerlistitems.DividerItemDecoration;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailRecyclerAdapter;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.VerticalSpaceItemDecoration;
 import com.google.android.gms.auth.GoogleAuthException;
@@ -61,6 +66,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -70,9 +76,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -83,7 +94,7 @@ import javax.net.ssl.HttpsURLConnection;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class EmailItemListActivity extends AppCompatActivity {
+public class EmailItemListActivity extends AppCompatActivity implements ComposeFragment.SendEmailTaskListener {
     public GoogleAccountCredential mCredential;
     ProgressDialog mProgress;
     EmailRecyclerAdapter mEmailRecyclerAdapter;
@@ -94,8 +105,7 @@ public class EmailItemListActivity extends AppCompatActivity {
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = {GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_INSERT, GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_MODIFY, GmailScopes.GMAIL_SEND};
-    private static final String ACCOUNT_NAME = "jackieho67@gmail.com";
+    private static final String[] SCOPES = {GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_INSERT, GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_MODIFY, GmailScopes.GMAIL_SEND, GmailScopes.MAIL_GOOGLE_COM};
     private static final String API_KEY = "408246309715-6r5ck2t5jfjfs5roi40id6em28uqb5v5.apps.googleusercontent.com";
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -119,13 +129,25 @@ public class EmailItemListActivity extends AppCompatActivity {
         toolbar.setTitle(getTitle());
         mEmailMessages = new ArrayList<>();
 
-        mDbExist = false;
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FrameLayout composeFragmentContainer = (FrameLayout) findViewById(R.id.compose_fragment_container);
+        final FrameLayout frameLayout = (FrameLayout) findViewById(R.id.frameLayout);
+
+
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+//                FragmentManager fragmentManager = getSupportFragmentManager();
+//                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//                fragmentTransaction.replace(R.id.compose_fragment_container, new ComposeFragment());
+//                fragmentTransaction.addToBackStack(null);
+//                composeFragmentContainer.setVisibility(View.VISIBLE);
+                ComposeFragment composeFragment = new ComposeFragment();
+                // fragmentTransaction.commit();
+                android.app.FragmentManager fm = getFragmentManager();
+                composeFragment.show(fm, "Compose");
+
+
             }
         });
 
@@ -137,7 +159,6 @@ public class EmailItemListActivity extends AppCompatActivity {
             // activity should be in two-pane mode.
             mTwoPane = true;
         }
-
 
 
         // Initialize credentials and service object.
@@ -167,6 +188,10 @@ public class EmailItemListActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.action_refresh){
+            if (isGooglePlayServicesAvailable()){
+                refreshResults();
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -214,7 +239,7 @@ public class EmailItemListActivity extends AppCompatActivity {
 
         } else {
             if (isDeviceOnline()) {
-                new DownloadEmailAsyncTask(mCredential).execute("https://www.googleapis.com/gmail/v1/users/jackieho67%40gmail.com/messages?key=" + API_KEY);
+                new DownloadEmailAsyncTask(mCredential).execute();
                 //new MakeRequestTask(mCredential).execute();
 
             } else {
@@ -242,15 +267,13 @@ public class EmailItemListActivity extends AppCompatActivity {
         //Check if db is empty
         mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
         String count = "SELECT count(*) FROM EMAILS";
-        Cursor cursorCount = mHelper.getReadableDatabase().rawQuery(count,null);
+        Cursor cursorCount = mHelper.getReadableDatabase().rawQuery(count, null);
         cursorCount.moveToFirst();
         int icount = cursorCount.getInt(0);
 
-        if (isGooglePlayServicesAvailable() && icount==0){
+        if (isGooglePlayServicesAvailable() && icount == 0) {
             refreshResults();
-            mDbExist = true;
-        }
-         else if (icount>0){
+        } else if (icount > 0) {
             new LoadEmailsFromDbAsyncTask().execute();
         }
     }
@@ -283,12 +306,22 @@ public class EmailItemListActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    @Override
+    public void sendEmail(HashMap<String, String> hashMap) {
+        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
+        mCredential = GoogleAccountCredential.usingOAuth2(
+                getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff())
+                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+        new SendEmailAsyncTask(mCredential).execute(hashMap);
+    }
+
     private class MakeRequestTask extends AsyncTask<ArrayList<String>, Email, List<Email>> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
         private HashMap<String, String> emailHash;
         String date;
-        String sender;
+        private GoogleAccountCredential usercred;
 
         public MakeRequestTask(GoogleAccountCredential credential) {
 
@@ -298,8 +331,9 @@ public class EmailItemListActivity extends AppCompatActivity {
                     transport, jsonFactory, credential)
                     .setApplicationName("Gmail API Android")
                     .build();
-
+            usercred = credential;
             emailHash = new HashMap<>();
+
         }
 
         @Override
@@ -313,6 +347,9 @@ public class EmailItemListActivity extends AppCompatActivity {
                     Message message = mService.users().messages().get("me", id).execute();
 
                     for (MessagePartHeader messagePartHeader : message.getPayload().getHeaders()) {
+                        if (messagePartHeader.getName().contains(usercred.getSelectedAccountName())){
+                            continue;
+                        }
                         if (messagePartHeader.getName().equals("Date")) {
                             date = messagePartHeader.getValue().substring(0, 11);
                             emailHash.put("DATE", date);
@@ -329,158 +366,156 @@ public class EmailItemListActivity extends AppCompatActivity {
                         }
                     }
 
-                MessagePart firstMessagePart;
-                if (message.getPayload().getParts() != null) {
-                    firstMessagePart = message.getPayload().getParts().get(0);
-                    String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(firstMessagePart.getBody().getData()));
-                    emailHash.put("BODY", emailBody);
-                } else {
-                    String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(message.getPayload().getBody().getData()));
-                    emailHash.put("BODY", emailBody);
+                    MessagePart firstMessagePart;
+                    if (message.getPayload().getParts() != null) {
+                        firstMessagePart = message.getPayload().getParts().get(0);
+                        String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(firstMessagePart.getBody().getData()));
+                        emailHash.put("BODY", emailBody);
+                    } else {
+                        String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(message.getPayload().getBody().getData()));
+                        emailHash.put("BODY", emailBody);
+                    }
+
+                    emailHash.put("SNIPPET", message.getSnippet());
+                    emailHash.put("ID", id);
+                    emailHash.put("FAVORITE", "0");
+
+                    Email email = new Email(emailHash);
+                    emailHeaderList.add(email);
+                    publishProgress(email);
+
+                    Log.i("EMAILS", "Added email id: " + id);
                 }
 
-                emailHash.put("SNIPPET", message.getSnippet());
-                emailHash.put("ID", id);
-                emailHash.put("FAVORITE", "0");
-
-                Email email = new Email(emailHash);
-                emailHeaderList.add(email);
-                publishProgress(email);
-
-                Log.i("EMAILS", "Added email id: " + id);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-        }
-        catch(IOException e)
-        {
-            e.printStackTrace();
+            return emailHeaderList;
         }
 
-        return emailHeaderList;
-    }
-
-    //Insert each email into database
-    @Override
-    protected void onProgressUpdate(Email... values) {
-        super.onProgressUpdate(values);
-        new InsertEmailDBAsyncTask().execute(values[0]);
-    }
-
-    @Override
-    protected void onPreExecute() {
-        //   mOutputText.setText("");
-        mProgress.show();
-    }
-
-    @Override
-    protected void onPostExecute(List<Email> output) {
-        mProgress.hide();
-        if (output == null || output.size() == 0) {
-            Toast.makeText(EmailItemListActivity.this, "No emails", Toast.LENGTH_SHORT).show();
-            //  mOutputText.setText("No results returned.");
-        } else {
-           setRecyclerView(output);
-            //mOutputText.setText(TextUtils.join("\n", output));
+        //Insert each email into database
+        @Override
+        protected void onProgressUpdate(Email... values) {
+            super.onProgressUpdate(values);
+            new InsertEmailDBAsyncTask().execute(values[0]);
         }
-    }
 
-    @Override
-    protected void onCancelled() {
-        mProgress.hide();
-        if (mLastError != null) {
-            if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
-                showGooglePlayServicesAvailabilityErrorDialog(
-                        ((GooglePlayServicesAvailabilityIOException) mLastError)
-                                .getConnectionStatusCode());
-            } else if (mLastError instanceof UserRecoverableAuthIOException) {
-                startActivityForResult(
-                        ((UserRecoverableAuthIOException) mLastError).getIntent(),
-                        MainActivity.REQUEST_AUTHORIZATION);
+        @Override
+        protected void onPreExecute() {
+            //   mOutputText.setText("");
+            mProgress.show();
+        }
+
+        @Override
+        protected void onPostExecute(List<Email> output) {
+            mProgress.hide();
+            if (output == null || output.size() == 0) {
+                Toast.makeText(EmailItemListActivity.this, "No emails", Toast.LENGTH_SHORT).show();
+                //  mOutputText.setText("No results returned.");
             } else {
-                // mOutputText.setText("The following error occurred:\n"
+                setRecyclerView(output);
+                //mOutputText.setText(TextUtils.join("\n", output));
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mProgress.hide();
+            if (mLastError != null) {
+                if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
+                    showGooglePlayServicesAvailabilityErrorDialog(
+                            ((GooglePlayServicesAvailabilityIOException) mLastError)
+                                    .getConnectionStatusCode());
+                } else if (mLastError instanceof UserRecoverableAuthIOException) {
+                    startActivityForResult(
+                            ((UserRecoverableAuthIOException) mLastError).getIntent(),
+                            MainActivity.REQUEST_AUTHORIZATION);
+                } else {
+                    // mOutputText.setText("The following error occurred:\n"
 //                            + mLastError.getMessage());
-            }
-        } else {
-            //              mOutputText.setText("Request cancelled.");
-        }
-    }
-}
-
-private class DownloadEmailAsyncTask extends AsyncTask<String, Void, ArrayList<String>> {
-    private com.google.api.services.gmail.Gmail mService = null;
-    String emailIdData;
-    ArrayList<String> emailIds;
-
-    public DownloadEmailAsyncTask(GoogleAccountCredential credential) {
-
-        HttpTransport transport = AndroidHttp.newCompatibleTransport();
-        com.google.api.client.json.JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-        mService = new com.google.api.services.gmail.Gmail.Builder(
-                transport, jsonFactory, credential)
-                .setApplicationName("Gmail API Android")
-                .build();
-        emailIds = new ArrayList<>();
-    }
-
-    @Override
-    protected ArrayList<String> doInBackground(String... params) {
-        try {
-            ArrayList<Message> messageList = new ArrayList<>();
-            ListMessagesResponse messages = mService.users().messages().list("me").execute();
-
-            for (int i = 0; i < 100; i++) {
-                messageList.add(messages.getMessages().get(i));
-            }
-
-            for (Message message : messageList) {
-                emailIds.add(message.getId());
-                //mEmailMessages.add(message);
-            }
-
-            int i = 2;
-
-        } catch (Throwable tho) {
-            if (tho instanceof UserRecoverableAuthIOException) {
-                startActivityForResult(((UserRecoverableAuthIOException) tho).getIntent(), REQUEST_AUTHORIZATION);
+                }
             } else {
-                tho.printStackTrace();
+                //              mOutputText.setText("Request cancelled.");
             }
         }
-
-        return emailIds;
     }
 
-    @Override
-    protected void onPostExecute(ArrayList<String> ids) {
-        //Send ids to list
-        mEmailIdsList = ids;
-        new MakeRequestTask(mCredential).execute(ids);
+    private class DownloadEmailAsyncTask extends AsyncTask<Void, Void, ArrayList<String>> {
+        private com.google.api.services.gmail.Gmail mService = null;
+        String emailIdData;
+        ArrayList<String> emailIds;
 
+        public DownloadEmailAsyncTask(GoogleAccountCredential credential) {
+
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            com.google.api.client.json.JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.gmail.Gmail.Builder(
+                    transport, jsonFactory, credential)
+                    .setApplicationName("Gmail API Android")
+                    .build();
+            emailIds = new ArrayList<>();
+        }
+
+        @Override
+        protected ArrayList<String> doInBackground(Void... params) {
+            try {
+                ArrayList<Message> messageList = new ArrayList<>();
+                ListMessagesResponse messages = mService.users().messages().list("me").execute();
+
+                for (int i = 0; i < 100; i++) {
+                    messageList.add(messages.getMessages().get(i));
+                }
+
+                for (Message message : messageList) {
+                    emailIds.add(message.getId());
+                    //mEmailMessages.add(message);
+                }
+
+                int i = 2;
+
+            } catch (Throwable tho) {
+                if (tho instanceof UserRecoverableAuthIOException) {
+                    startActivityForResult(((UserRecoverableAuthIOException) tho).getIntent(), REQUEST_AUTHORIZATION);
+                } else {
+                    tho.printStackTrace();
+                }
+            }
+
+            return emailIds;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<String> ids) {
+            //Send ids to list
+            mEmailIdsList = ids;
+            new MakeRequestTask(mCredential).execute(ids);
+
+        }
     }
-}
 
-//Save emails to database
-private class InsertEmailDBAsyncTask extends AsyncTask<Email, Void, Void> {
+    //Save emails to database
+    private class InsertEmailDBAsyncTask extends AsyncTask<Email, Void, Void> {
 
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        //mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
 
+        }
+
+        @Override
+        protected Void doInBackground(Email... params) {
+            mHelper.addEmailsToDatabase(params[0]);
+            return null;
+        }
     }
 
-    @Override
-    protected Void doInBackground(Email... params) {
-        mHelper.addEmailsToDatabase(params[0]);
-        return null;
-    }
-}
-
-    private class LoadEmailsFromDbAsyncTask extends AsyncTask<Void,Void,List<Email>>{
-HashMap<String,String> emailHashFromDb;
+    private class LoadEmailsFromDbAsyncTask extends AsyncTask<Void, Void, List<Email>> {
+        HashMap<String, String> emailHashFromDb;
         List<Email> emailListFromDb;
 
-        public LoadEmailsFromDbAsyncTask(){
+        public LoadEmailsFromDbAsyncTask() {
             emailHashFromDb = new HashMap<>();
             emailListFromDb = new ArrayList<>();
         }
@@ -490,14 +525,14 @@ HashMap<String,String> emailHashFromDb;
             //mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
             Cursor cursor = mHelper.getAllEmailsFromDb();
             cursor.moveToFirst();
-            while (!cursor.isAfterLast()){
+            while (!cursor.isAfterLast()) {
                 emailHashFromDb.clear();
                 emailHashFromDb.put("SENDER", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER)));
-                emailHashFromDb.put("DATE",cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE)));
-                emailHashFromDb.put("SUBJECT",cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT)));
-                emailHashFromDb.put("ID",cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_ID)));
-                emailHashFromDb.put("SNIPPET",cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SNIPPET)));
-                emailHashFromDb.put("FAVORITE",cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_FAVORITE)));
+                emailHashFromDb.put("DATE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE)));
+                emailHashFromDb.put("SUBJECT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT)));
+                emailHashFromDb.put("ID", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_ID)));
+                emailHashFromDb.put("SNIPPET", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SNIPPET)));
+                emailHashFromDb.put("FAVORITE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_FAVORITE)));
                 emailListFromDb.add(new Email(emailHashFromDb));
                 cursor.moveToNext();
             }
@@ -508,7 +543,7 @@ HashMap<String,String> emailHashFromDb;
         @Override
         protected void onPostExecute(List<Email> emailList) {
 //            mCursor.close();
-            if (emailList == null || emailList.size() == 0){
+            if (emailList == null || emailList.size() == 0) {
                 //TODO: display message
             } else {
                 setRecyclerView(emailList);
@@ -516,13 +551,83 @@ HashMap<String,String> emailHashFromDb;
         }
     }
 
-    public void setRecyclerView (List<Email> recyclerList){
-        emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
-        emaillistRecycler.setHasFixedSize(true);
-        emaillistRecycler.setLayoutManager(new LinearLayoutManager(EmailItemListActivity.this));
-        emaillistRecycler.addItemDecoration(new VerticalSpaceItemDecoration(20));
-        emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList);
-        emaillistRecycler.setAdapter(emailRecyclerAdapter);
-    }
+    private class SendEmailAsyncTask extends AsyncTask<HashMap, Void, Void> {
+        private com.google.api.services.gmail.Gmail mService = null;
+        private GoogleAccountCredential googleCredentials;
 
-}
+        public SendEmailAsyncTask(GoogleAccountCredential credential) {
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            com.google.api.client.json.JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.gmail.Gmail.Builder(
+                    transport, jsonFactory, credential)
+                    .setApplicationName("Gmail API Android")
+                    .build();
+            googleCredentials = credential;
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            Snackbar.make(findViewById(android.R.id.content), "Sending", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+
+        @Override
+        protected Void doInBackground(HashMap... params) {
+            HashMap<String, String> emailContents = params[0];
+            String recipient = emailContents.get("RECIPIENT");
+            String subject = emailContents.get("SUBJECT");
+            String body = emailContents.get("BODY");
+            String sender = "me"; // stupid!!
+            try {
+                Message message = createMessageWithEmail(createEmail(recipient, sender, subject, body));
+
+                mService.users().messages().send(sender, message).execute();
+                Log.i("EMAIL", "Email sent to: " + recipient);
+            } catch (MessagingException e){
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+                return null;
+            }
+        }
+
+        public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
+            Properties props = new Properties();
+            Session session = Session.getDefaultInstance(props, null);
+
+            MimeMessage email = new MimeMessage(session);
+            InternetAddress tAddress = new InternetAddress(to);
+            InternetAddress fAddress = new InternetAddress(from);
+
+            email.setFrom(new InternetAddress(from));
+            email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
+            email.setSubject(subject);
+            email.setText(bodyText);
+            return email;
+        }
+
+        public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            email.writeTo(bytes);
+            String encodedEmail = com.google.api.client.util.Base64.encodeBase64URLSafeString(bytes.toByteArray());
+            Message message = new Message();
+            message.setRaw(encodedEmail);
+            return message;
+        }
+
+
+        public void setRecyclerView(List<Email> recyclerList) {
+            emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
+            emaillistRecycler.setHasFixedSize(true);
+            emaillistRecycler.setLayoutManager(new LinearLayoutManager(EmailItemListActivity.this));
+            emaillistRecycler.addItemDecoration(new VerticalSpaceItemDecoration(20));
+            emaillistRecycler.addItemDecoration(new DividerItemDecoration(EmailItemListActivity.this,R.drawable.divider));
+            emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList);
+            emaillistRecycler.setAdapter(emailRecyclerAdapter);
+        }
+
+    }

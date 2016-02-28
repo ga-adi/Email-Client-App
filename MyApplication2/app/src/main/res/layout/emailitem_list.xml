@@ -10,4 +10,8 @@
     android:layout_marginRight="16dp"
     app:layoutManager="LinearLayoutManager"
     tools:context="com.adi.ho.jackie.emailapp.EmailItemListActivity"
-    tools:listitem="@layout/emailitem_list_content" />
+    tools:listitem="@layout/emailitem_list_content">
+
+
+</android.support.v7.widget.RecyclerView>
+

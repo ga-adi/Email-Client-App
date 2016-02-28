@@ -25,10 +25,18 @@
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:padding="10dp">
 
         <include layout="@layout/emailitem_list" />
+        <FrameLayout
+            android:id="@+id/compose_fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="0dp"/>
     </FrameLayout>
+
+
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
