@@ -30,8 +30,12 @@
         <activity
             android:name=".ReadEmailActivity"
             android:label="@string/title_activity_read_email"
-            android:theme="@style/AppTheme"
-            android:parentActivityName=".MainActivity"></activity>
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".ComposeEmailActivity"
+            android:label="@string/title_activity_compose_email"
+            android:theme="@style/AppTheme"></activity>
     </application>
 
 </manifest>

@@ -1,16 +1,15 @@
 package com.example.gmailquickstart;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
+import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import android.view.View;
 import android.widget.TextView;
 
@@ -32,9 +31,10 @@ public class ReadEmailActivity extends AppCompatActivity {
     private ActionBar mActionBar;
     private TextView mTo,mFrom,mCC,mDate,mBody;
     private Email mEmail;
-    private String mEmailID,mEmailTo,mEmailFrom,mEmailCC,mEmailDate,mEmailBody;
+    private String mEmailID;
     private com.google.api.services.gmail.Gmail mService;
     private GoogleAccountCredential mCredential;
+    FloatingActionButton mFab;
     SharedPreferences mSettings;
     private Message mMessage;
 
@@ -49,25 +49,29 @@ public class ReadEmailActivity extends AppCompatActivity {
         mFrom = (TextView) findViewById(R.id.xmlReadFrom);
         mDate = (TextView) findViewById(R.id.xmlReadDate);
         mBody = (TextView) findViewById(R.id.xmlReadBody);
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
 
         setSupportActionBar(mToolbar);
         mActionBar = getSupportActionBar();
         mActionBar.setDisplayHomeAsUpEnabled(true);
         mActionBar.setHomeButtonEnabled(true);
 
-        // Initialize credentials and service object
         mSettings = getSharedPreferences(MainActivity.SHARED_PREFS, Context.MODE_PRIVATE);
 
         //AsyncTask to populate email data on screen
         RetrieveEmailTask retrieveEmailTask = new RetrieveEmailTask();
         retrieveEmailTask.execute(getIntent().getStringExtra(EmailAdapter.EMAIL_ID));
 
-        //FAB set to send response to email sender
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        //FAB launches ComposeEmailActivity to respond to email under review
+        mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Send intent to "Compose" message screen with from, to, and subject (add "RE:") pre-populated
+                Intent intent = new Intent(ReadEmailActivity.this,ComposeEmailActivity.class);
+                intent.putExtra(EmailAdapter.EMAIL_SUBJECT,mEmail.getmPayloadHeadersSubject());
+                intent.putExtra(EmailAdapter.EMAIL_TO,mEmail.getmPayloadHeadersFrom());
+                intent.putExtra(EmailAdapter.EMAIL_CC,mEmail.getmPayloadHeadersCc());
+                intent.putExtra(EmailAdapter.EMAIL_BODY,mEmail.getmPayloadPartsBodyData());
+                startActivity(intent);
             }
         });
     }
@@ -91,17 +95,14 @@ public class ReadEmailActivity extends AppCompatActivity {
                 }
             }
 
-            if(mEmailBody == null) {
+            if(mEmail.getmPayloadPartsBodyData() == null) {
+                //Setup up Gmail account connection
                 mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(), Arrays.asList(MainActivity.SCOPES)).setBackOff(new ExponentialBackOff()).setSelectedAccountName(mSettings.getString(MainActivity.PREF_ACCOUNT_NAME, null));
                 HttpTransport transport = AndroidHttp.newCompatibleTransport();
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-                mService = new com.google.api.services.gmail.Gmail.Builder(transport, jsonFactory, mCredential)
-                        .setApplicationName("Gmail API Android Quickstart").build();
-                try{
-                    mMessage = mService.users().messages().get(mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,"me"), mEmail.getmEmailID()).execute();
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
+                mService = new com.google.api.services.gmail.Gmail.Builder(transport, jsonFactory, mCredential).setApplicationName("Gmail API Android Quickstart").build();
+                try{mMessage = mService.users().messages().get(mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,"me"), mEmail.getmEmailID()).execute();
+                } catch (IOException e){e.printStackTrace();}
 
                 //Code to pull email body and decode into readable text
                 StringBuilder sb = new StringBuilder();
@@ -110,18 +111,15 @@ public class ReadEmailActivity extends AppCompatActivity {
                         if(part.getMimeType().contains("multipart")){
                             for(MessagePart partII : part.getParts()){
                                 if(partII.getMimeType().equals("text/plain")){
-                                    sb.append(new String(com.google.api.client.util.Base64.decodeBase64(
-                                            partII.getBody().getData())));
+                                    sb.append(new String(Base64.decodeBase64(partII.getBody().getData())));
                                 }
                             }
                         } else if (part.getMimeType().equals("text/plain")){
-                            sb.append(new String (com.google.api.client.util.Base64.decodeBase64(
-                                    part.getBody().getData())));
+                            sb.append(new String (Base64.decodeBase64(part.getBody().getData())));
                         }
                     }
                 } else {
-                    sb.append(new String (com.google.api.client.util.Base64.decodeBase64(
-                            mMessage.getPayload().getBody().getData())));
+                    sb.append(new String (Base64.decodeBase64(mMessage.getPayload().getBody().getData())));
                 }
                 String body = sb.toString();
                 mEmail.setmPayloadPartsBodyData(body);

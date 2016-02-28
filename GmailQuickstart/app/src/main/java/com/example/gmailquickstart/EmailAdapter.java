@@ -17,6 +17,11 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.ViewHolder> 
     ArrayList<Email> mArrayList;
     public static final String EMAIL_ID = "Email ID";
     public static final String EMAIL_SUBJECT = "Email Subject";
+    public static final String EMAIL_DATE = "Email Date";
+    public static final String EMAIL_FROM = "Email From";
+    public static final String EMAIL_TO = "Email To";
+    public static final String EMAIL_CC = "Email Cc";
+    public static final String EMAIL_BODY = "Email Body";
 
     public EmailAdapter(ArrayList<Email> array) {
         mArrayList = array;
