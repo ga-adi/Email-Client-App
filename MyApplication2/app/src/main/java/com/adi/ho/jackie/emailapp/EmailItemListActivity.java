@@ -36,6 +36,7 @@ import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
 import com.adi.ho.jackie.emailapp.dummy.DummyContent;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.DividerItemDecoration;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailRecyclerAdapter;
+import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailViewHolder;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.VerticalSpaceItemDecoration;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -84,6 +85,7 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -94,7 +96,7 @@ import javax.net.ssl.HttpsURLConnection;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class EmailItemListActivity extends AppCompatActivity implements ComposeFragment.SendEmailTaskListener {
+public class EmailItemListActivity extends AppCompatActivity implements ComposeFragment.SendEmailTaskListener, EmailViewHolder.MakeSecondFragmentListener {
     public GoogleAccountCredential mCredential;
     ProgressDialog mProgress;
     EmailRecyclerAdapter mEmailRecyclerAdapter;
@@ -106,13 +108,11 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = {GmailScopes.GMAIL_READONLY, GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_INSERT, GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_MODIFY, GmailScopes.GMAIL_SEND, GmailScopes.MAIL_GOOGLE_COM};
-    private static final String API_KEY = "408246309715-6r5ck2t5jfjfs5roi40id6em28uqb5v5.apps.googleusercontent.com";
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
      */
-    private boolean mTwoPane;
-    private boolean mDbExist;
+    public boolean mTwoPane;
     RecyclerView emaillistRecycler;
     private MailDatabaseOpenHelper mHelper;
     private EmailRecyclerAdapter emailRecyclerAdapter;
@@ -171,6 +171,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -188,8 +189,8 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else if (id == R.id.action_refresh){
-            if (isGooglePlayServicesAvailable()){
+        } else if (id == R.id.action_refresh) {
+            if (isGooglePlayServicesAvailable()) {
                 refreshResults();
             }
         }
@@ -316,6 +317,21 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         new SendEmailAsyncTask(mCredential).execute(hashMap);
     }
 
+    @Override
+    public void makeSecondFragment(String emailId) {
+
+        //For two panes
+        Bundle bundle = new Bundle();
+        bundle.putString("ID", emailId);
+        EmailItemDetailFragment emailItemDetailFragment = new EmailItemDetailFragment();
+        emailItemDetailFragment.setArguments(bundle);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.emailitem_detail_container, emailItemDetailFragment);
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
     private class MakeRequestTask extends AsyncTask<ArrayList<String>, Email, List<Email>> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
@@ -347,7 +363,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                     Message message = mService.users().messages().get("me", id).execute();
 
                     for (MessagePartHeader messagePartHeader : message.getPayload().getHeaders()) {
-                        if (messagePartHeader.getName().contains(usercred.getSelectedAccountName())){
+                        if (messagePartHeader.getName().contains(usercred.getSelectedAccountName())) {
                             continue;
                         }
                         if (messagePartHeader.getName().equals("Date")) {
@@ -586,48 +602,77 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 
                 mService.users().messages().send(sender, message).execute();
                 Log.i("EMAIL", "Email sent to: " + recipient);
-            } catch (MessagingException e){
+            } catch (MessagingException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-                return null;
+            return null;
+        }
+    }
+
+    public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        MimeMessage email = new MimeMessage(session);
+        InternetAddress tAddress = new InternetAddress(to);
+        InternetAddress fAddress = new InternetAddress(from);
+
+        email.setFrom(new InternetAddress(from));
+        email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
+        email.setSubject(subject);
+        email.setText(bodyText);
+        return email;
+    }
+
+    public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        email.writeTo(bytes);
+        String encodedEmail = com.google.api.client.util.Base64.encodeBase64URLSafeString(bytes.toByteArray());
+        Message message = new Message();
+        message.setRaw(encodedEmail);
+        return message;
+    }
+
+    private String getTextFromMessage(Message message) throws Exception {
+        String result = "";
+        if (message.isMimeType("text/plain")) {
+            result = message.getContent().toString();
+        } else if (message.isMimeType("multipart/*")) {
+            MimeMultipart mimeMultipart = (MimeMultipart) message.getContent();
+            result = getTextFromMimeMultipart(mimeMultipart);
+        }
+        return result;
+    }
+
+    private String getTextFromMimeMultipart(
+            MimeMultipart mimeMultipart) throws Exception{
+        String result = "";
+        int count = mimeMultipart.getCount();
+        for (int i = 0; i < count; i++) {
+            BodyPart bodyPart = mimeMultipart.getBodyPart(i);
+            if (bodyPart.isMimeType("text/plain")) {
+                result = result + "\n" + bodyPart.getContent();
+                break; // without break same text appears twice in my tests
+            } else if (bodyPart.isMimeType("text/html")) {
+                String html = (String) bodyPart.getContent();
+                result = result + "\n" + org.jsoup.Jsoup.parse(html).text();
+            } else if (bodyPart.getContent() instanceof MimeMultipart){
+                result = result + getTextFromMimeMultipart((MimeMultipart)bodyPart.getContent());
             }
         }
-
-        public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
-            Properties props = new Properties();
-            Session session = Session.getDefaultInstance(props, null);
-
-            MimeMessage email = new MimeMessage(session);
-            InternetAddress tAddress = new InternetAddress(to);
-            InternetAddress fAddress = new InternetAddress(from);
-
-            email.setFrom(new InternetAddress(from));
-            email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
-            email.setSubject(subject);
-            email.setText(bodyText);
-            return email;
-        }
-
-        public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            email.writeTo(bytes);
-            String encodedEmail = com.google.api.client.util.Base64.encodeBase64URLSafeString(bytes.toByteArray());
-            Message message = new Message();
-            message.setRaw(encodedEmail);
-            return message;
-        }
-
-
-        public void setRecyclerView(List<Email> recyclerList) {
-            emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
-            emaillistRecycler.setHasFixedSize(true);
-            emaillistRecycler.setLayoutManager(new LinearLayoutManager(EmailItemListActivity.this));
-            emaillistRecycler.addItemDecoration(new VerticalSpaceItemDecoration(20));
-            emaillistRecycler.addItemDecoration(new DividerItemDecoration(EmailItemListActivity.this,R.drawable.divider));
-            emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList);
-            emaillistRecycler.setAdapter(emailRecyclerAdapter);
-        }
-
+        return result;
     }
+
+    public void setRecyclerView(List<Email> recyclerList) {
+        emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
+        emaillistRecycler.setHasFixedSize(true);
+        emaillistRecycler.setLayoutManager(new LinearLayoutManager(EmailItemListActivity.this));
+        emaillistRecycler.addItemDecoration(new VerticalSpaceItemDecoration(20));
+        emaillistRecycler.addItemDecoration(new DividerItemDecoration(EmailItemListActivity.this, R.drawable.divider));
+        emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList, getSupportFragmentManager());
+        emaillistRecycler.setAdapter(emailRecyclerAdapter);
+    }
+
+}

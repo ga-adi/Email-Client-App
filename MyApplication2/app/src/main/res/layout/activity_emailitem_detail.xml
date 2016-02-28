@@ -22,11 +22,11 @@
 
 
     </android.support.design.widget.AppBarLayout>
-<FrameLayout
-    android:id="@+id/emailitem_detail_container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-</FrameLayout>
+<!--<FrameLayout-->
+    <!--android:id="@+id/emailitem_detail_container"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
+
     <LinearLayout
         android:layout_marginTop="?attr/actionBarSize"
         android:layout_width="match_parent"
@@ -61,7 +61,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sent to: " />
+                    android:text="Sent to: "
+                    android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/email_recipient_detail"
@@ -70,6 +71,24 @@
                     android:text="Recipient"/>
 
             </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="15dp">
+        <TextView
+            android:text="Subject: "
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/email_subject_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="subject"/>
+
+        </LinearLayout>
 
             <TextView
                 android:layout_marginTop="10dp"
@@ -97,5 +116,5 @@
 
     </android.support.v7.widget.Toolbar>
 
-
+<!--</FrameLayout>-->
 </android.support.design.widget.CoordinatorLayout>

@@ -1,13 +1,19 @@
 package com.adi.ho.jackie.emailapp.recyclerlistitems;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.adi.ho.jackie.emailapp.Email;
+import com.adi.ho.jackie.emailapp.EmailItemDetailActivity;
+import com.adi.ho.jackie.emailapp.EmailItemDetailFragment;
 import com.adi.ho.jackie.emailapp.R;
 
 import java.util.List;
@@ -19,10 +25,12 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailViewHolder> 
 
     private Context context;
     private List<Email> emailList;
+    private FragmentManager fragmentManager;
 
-    public EmailRecyclerAdapter(Context context, List<Email> emailList) {
+    public EmailRecyclerAdapter(Context context, List<Email> emailList, FragmentManager fragmentManager) {
         this.context = context;
         this.emailList = emailList;
+        this.fragmentManager = fragmentManager;
     }
 
     @Override
@@ -33,16 +41,19 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailViewHolder> 
     }
 
     @Override
-    public void onBindViewHolder(EmailViewHolder holder, int position) {
+    public void onBindViewHolder(EmailViewHolder holder, final int position) {
         holder.emailDate.setText(emailList.get(position).getDate());
         holder.emailLabel.setText(emailList.get(position).getSender());
         holder.emailSnippet.setText(emailList.get(position).getSnippet());
         holder.emailId.setText(emailList.get(position).getId());
         holder.emailSubject.setText(emailList.get(position).getSubject());
+
     }
 
     @Override
     public int getItemCount() {
         return emailList.size();
     }
+
+
 }

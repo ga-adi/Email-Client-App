@@ -24,7 +24,6 @@
     </android.support.design.widget.AppBarLayout>
 
     <LinearLayout
-        android:layout_marginTop="?attr/actionBarSize"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
@@ -64,6 +63,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Recipient"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="15dp">
+            <TextView
+                android:text="Subject: "
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/email_subject_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="subject"/>
 
         </LinearLayout>
 

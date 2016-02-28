@@ -1,6 +1,7 @@
 package com.adi.ho.jackie.emailapp;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,11 +37,13 @@ public class EmailItemDetailActivity extends AppCompatActivity {
     private String mDate;
     private String mBody;
     private String mId;
+    private String mSubject;
 
     public TextView mSenderText;
     public TextView mRecipientText;
     public TextView mDateText;
     public TextView mBodyText;
+    public TextView mSubjectText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,7 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         mDateText = (TextView) findViewById(R.id.email_date_detail);
         mRecipientText = (TextView) findViewById(R.id.email_recipient_detail);
         mSenderText = (TextView) findViewById(R.id.email_sender_detail);
+        mSubjectText = (TextView)findViewById(R.id.email_subject_detail);
 
         mId = getIntent().getStringExtra("EMAILID");
 
@@ -74,16 +78,15 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         //
         // http://developer.android.com/guide/components/fragments.html
         //
-        if (savedInstanceState == null) {
+        if (savedInstanceState == null && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(EmailItemDetailFragment.ARG_ITEM_ID,
-                    getIntent().getStringExtra(EmailItemDetailFragment.ARG_ITEM_ID));
+            arguments.putString("ID",mId);
             EmailItemDetailFragment fragment = new EmailItemDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.emailitem_detail_container, fragment)
+                    .replace(R.id.emailitem_detail_container, fragment)
                     .commit();
         }
     }
@@ -124,6 +127,7 @@ public class EmailItemDetailActivity extends AppCompatActivity {
             emailIdContents.put("SENDER", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER)));
             emailIdContents.put("BODY", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_BODY)));
             emailIdContents.put("DATE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE)));
+            emailIdContents.put("SUBJECT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT)));
             cursor.close();
             return emailIdContents;
         }
@@ -134,10 +138,13 @@ public class EmailItemDetailActivity extends AppCompatActivity {
             mDate = hashMap.get("DATE").toString();
             mRecipient = hashMap.get("RECIPIENT").toString();
             mSender = hashMap.get("SENDER").toString();
+            mSubject = hashMap.get("SUBJECT").toString();
+
 
             mSenderText.setText(mSender);
             mRecipientText.setText(mRecipient);
             mDateText.setText("Date Received: " + mDate);
+            mSubjectText.setText(mSubject);
             if (mBody.contains("html")) {
                 mBodyText.setText(Html.fromHtml(mBody));
             } else {
