@@ -19,14 +19,14 @@ public class DetailActivity extends AppCompatActivity {
         //TODO - if user rotates to landscape while here, should revert to MainActivity instead
 
         //TODO - retrieve just the email ID and do another API call to get the rest of the detail
-        String subject = null;
+        String id = null;
         if (getIntent().getExtras() != null) {
-            subject = getIntent().getExtras().getString(MainActivity.SELECTED_EMAIL_KEY);
+            id = getIntent().getExtras().getString(MainActivity.SELECTED_EMAIL_KEY);
         }
 
-        if (subject != null) {
+        if (id != null) {
             Bundle arguments = new Bundle();
-            arguments.putString(MainActivity.SELECTED_EMAIL_KEY, subject);
+            arguments.putString(MainActivity.SELECTED_EMAIL_KEY, id);
 
             DetailFragment detailFragment = new DetailFragment();
             detailFragment.setArguments(arguments);

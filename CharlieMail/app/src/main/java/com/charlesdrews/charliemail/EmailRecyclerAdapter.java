@@ -22,6 +22,8 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
         mEmails = emails;
     }
 
+    //TODO - figure out how to get more emails when user scrolls to bottom of list
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         mContext = parent.getContext();
@@ -34,11 +36,10 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        //TODO - get the message id and use it here
+        holder.mId.setText(mEmails.get(position).getId());
         holder.mSubject.setText(mEmails.get(position).getSubject());
         try {
-            //TODO - set on click listeners for other components of email list item
-            holder.mSubject.setOnClickListener( (View.OnClickListener) mContext);
+            holder.mLayout.setOnClickListener( (View.OnClickListener) mContext);
         } catch (ClassCastException e) {
             Log.e("EmailRecyclerAdapter", "Error casting parent.getContext() to View.OnClickListener");
             e.printStackTrace();
@@ -51,11 +52,14 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mSubject;
+        public View mLayout;
+        public TextView mSubject, mId;
 
         public ViewHolder(View rootView) {
             super(rootView);
-            mSubject = (TextView) rootView.findViewById(R.id.email_subject);
+            mLayout = rootView.findViewById(R.id.email_list_layout);
+            mSubject = (TextView) rootView.findViewById(R.id.email_list_subject);
+            mId = (TextView) rootView.findViewById(R.id.email_list_id_hidden);
         }
     }
 }

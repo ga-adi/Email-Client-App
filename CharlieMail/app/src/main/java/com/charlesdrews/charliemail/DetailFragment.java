@@ -13,14 +13,14 @@ import android.widget.TextView;
  * Created by charlie on 2/26/16.
  */
 public class DetailFragment extends Fragment {
-    private String mSubject;
+    private String mId;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (getArguments().containsKey(MainActivity.SELECTED_EMAIL_KEY)) {
-            mSubject = getArguments().getString(MainActivity.SELECTED_EMAIL_KEY);
+            mId = getArguments().getString(MainActivity.SELECTED_EMAIL_KEY);
         }
     }
 
@@ -28,9 +28,10 @@ public class DetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        if (mSubject != null) {
+        if (mId != null) {
+            //TODO - start new async task to get email w/ id = mId
             TextView subject = (TextView) rootView.findViewById(R.id.detail_subject);
-            subject.setText(mSubject);
+            subject.setText(mId);
         }
         return rootView;
     }

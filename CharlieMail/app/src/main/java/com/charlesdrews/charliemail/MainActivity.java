@@ -98,12 +98,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.email_subject:
-                String subject = ((TextView) v.findViewById(R.id.email_subject)).getText().toString();
+            //TODO - set on click listeners for other components of email list item
+            case R.id.email_list_layout:
+                String id = ((TextView) v.findViewById(R.id.email_list_id_hidden)).getText().toString();
                 Bundle bundle = new Bundle();
 
-                //TODO - pass just id, not each component like subject
-                bundle.putString(SELECTED_EMAIL_KEY, subject);
+                bundle.putString(SELECTED_EMAIL_KEY, id);
 
                 if (mTwoPanes) {
                     // update detail fragment in right pane

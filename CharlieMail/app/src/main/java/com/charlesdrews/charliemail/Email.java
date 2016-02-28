@@ -18,6 +18,7 @@ import javax.mail.internet.MimeMessage;
  * Created by charlie on 2/25/16.
  */
 public class Email {
+    private String mId;
     private String mFrom;
     private String mTo;
     private String mCc;
@@ -25,8 +26,9 @@ public class Email {
     private String mSubject;
     private String mBody;
 
-    public Email(MimeMessage email) {
+    public Email(String id, MimeMessage email) {
         try {
+            mId = id;
             mFrom = getStringFromAddressArray(email.getFrom());
             mTo = getStringFromAddressArray(email.getRecipients(Message.RecipientType.TO));
             mCc = getStringFromAddressArray(email.getRecipients(Message.RecipientType.CC));
@@ -54,6 +56,10 @@ public class Email {
         } else {
             return "";
         }
+    }
+
+    public String getId() {
+        return mId;
     }
 
     public String getFrom() {

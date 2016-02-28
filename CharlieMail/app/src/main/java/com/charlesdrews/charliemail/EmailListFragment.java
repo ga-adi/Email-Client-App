@@ -44,6 +44,7 @@ import javax.mail.internet.MimeMessage;
  * Created by charlie on 2/25/16.
  */
 public class EmailListFragment extends Fragment {
+    private static final long mMaxResults = 20;
     private List<String> mLabels;
     private ArrayList<Email> mEmails;
     private EmailRecyclerAdapter mAdapter;
@@ -128,13 +129,7 @@ public class EmailListFragment extends Fragment {
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                List<MimeMessage> emails = getDataFromApi();
-                mEmails.clear();
-                if (emails != null) {
-                    for (MimeMessage email : emails) {
-                        mEmails.add(new Email(email));
-                    }
-                }
+                getDataFromApi();
                 return true;
             } catch (Exception e) {
                 mLastError = e;
@@ -155,14 +150,14 @@ public class EmailListFragment extends Fragment {
             }
         }
 
-        private List<MimeMessage> getDataFromApi() throws IOException {
+        private void getDataFromApi() throws IOException {
+            mEmails.clear();
+
             String userId = "me"; // special value - indicates authenticated user
 
-            ArrayList<MimeMessage> mimeMessages = new ArrayList<>();
             ListMessagesResponse responses = mService.users().messages()
-                    .list(userId).setLabelIds(mLabels).execute();
+                    .list(userId).setLabelIds(mLabels).setMaxResults(mMaxResults).execute();
 
-            //TODO - limit # of emails - batching?
             if (responses.getMessages() != null) {
                 for (Message response : responses.getMessages()) {
 
@@ -174,14 +169,13 @@ public class EmailListFragment extends Fragment {
 
                     try {
                         MimeMessage mimeMessage = new MimeMessage(session, new ByteArrayInputStream(emailBytes));
-                        mimeMessages.add(mimeMessage);
+                        mEmails.add(new Email(message.getId(), mimeMessage));
                     } catch (MessagingException e) {
                         Log.e("EmailListFragment", e.getMessage());
                         e.printStackTrace();
                     }
                 }
             }
-            return mimeMessages;
         }
 
         @Override
