@@ -13,14 +13,15 @@ import android.widget.TextView;
  * Created by charlie on 2/26/16.
  */
 public class DetailFragment extends Fragment {
-    private String mId;
+    private Email mEmail;
+    private TextView mFrom, mTo, mCc, mSentDate, mSubject, mBody;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (getArguments().containsKey(MainActivity.SELECTED_EMAIL_KEY)) {
-            mId = getArguments().getString(MainActivity.SELECTED_EMAIL_KEY);
+            mEmail = getArguments().getParcelable(MainActivity.SELECTED_EMAIL_KEY);
         }
     }
 
@@ -28,10 +29,21 @@ public class DetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        if (mId != null) {
-            //TODO - start new async task to get email w/ id = mId
-            TextView subject = (TextView) rootView.findViewById(R.id.detail_subject);
-            subject.setText(mId);
+
+        mFrom = (TextView) rootView.findViewById(R.id.detail_from);
+        mTo = (TextView) rootView.findViewById(R.id.detail_to);
+        mCc = (TextView) rootView.findViewById(R.id.detail_cc);
+        mSentDate = (TextView) rootView.findViewById(R.id.detail_date);
+        mSubject = (TextView) rootView.findViewById(R.id.detail_subject);
+        mBody = (TextView) rootView.findViewById(R.id.detail_body);
+
+        if (mEmail != null) {
+            mFrom.setText("From: " + mEmail.getFrom());
+            mTo.setText("To: " + mEmail.getTo());
+            mCc.setText("CC: " + mEmail.getCc());
+            mSentDate.setText(mEmail.getSentDate());
+            mSubject.setText(mEmail.getSubject());
+            mBody.setText(mEmail.getBody());
         }
         return rootView;
     }

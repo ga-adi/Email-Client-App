@@ -36,12 +36,20 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.mId.setText(mEmails.get(position).getId());
-        holder.mSubject.setText(mEmails.get(position).getSubject());
+        final Email email = mEmails.get(position);
+
+        holder.mId.setText(email.getId());
+        holder.mSubject.setText(email.getSubject());
+
         try {
-            holder.mLayout.setOnClickListener( (View.OnClickListener) mContext);
+            holder.mLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ((MainActivity) v.getContext()).onEmailSelected(email);
+                }
+            });
         } catch (ClassCastException e) {
-            Log.e("EmailRecyclerAdapter", "Error casting parent.getContext() to View.OnClickListener");
+            Log.e("EmailRecyclerAdapter", "Error casting v.getContext() to MainActivity");
             e.printStackTrace();
         }
     }

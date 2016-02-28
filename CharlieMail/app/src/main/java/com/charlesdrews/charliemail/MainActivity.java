@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -95,30 +96,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void onEmailSelected(Email email) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(SELECTED_EMAIL_KEY, email);
+
+        if (mTwoPanes) {
+            DetailFragment detailFragment = new DetailFragment();
+            detailFragment.setArguments(bundle);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.detail_fragment_container, detailFragment)
+                    .commit();
+        } else {
+            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            intent.putExtras(bundle);
+            startActivity(intent);
+        }
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             //TODO - set on click listeners for other components of email list item
             case R.id.email_list_layout:
-                String id = ((TextView) v.findViewById(R.id.email_list_id_hidden)).getText().toString();
-                Bundle bundle = new Bundle();
-
-                bundle.putString(SELECTED_EMAIL_KEY, id);
-
-                if (mTwoPanes) {
-                    // update detail fragment in right pane
-                    DetailFragment detailFragment = new DetailFragment();
-                    detailFragment.setArguments(bundle);
-
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.detail_fragment_container, detailFragment)
-                            .commit();
-                } else {
-                    // launch detail activity
-                    Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
-                }
                 break;
             case R.id.fab:
                 //TODO - compose new email

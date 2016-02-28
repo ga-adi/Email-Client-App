@@ -1,5 +1,7 @@
 package com.charlesdrews.charliemail;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.io.IOException;
@@ -17,14 +19,18 @@ import javax.mail.internet.MimeMessage;
  * Represents an email w/ subject, sender, recipient, time sent, etc.
  * Created by charlie on 2/25/16.
  */
-public class Email {
-    private String mId;
-    private String mFrom;
-    private String mTo;
-    private String mCc;
-    private Date mSentDate;
-    private String mSubject;
-    private String mBody;
+public class Email implements Parcelable {
+    private String mId, mFrom, mTo, mCc, mSentDate, mSubject, mBody;
+
+    public Email(Parcel in) {
+        mId = in.readString();
+        mFrom = in.readString();
+        mTo = in.readString();
+        mCc = in.readString();
+        mSentDate = in.readString();
+        mSubject = in.readString();
+        mBody = in.readString();
+    }
 
     public Email(String id, MimeMessage email) {
         try {
@@ -32,9 +38,11 @@ public class Email {
             mFrom = getStringFromAddressArray(email.getFrom());
             mTo = getStringFromAddressArray(email.getRecipients(Message.RecipientType.TO));
             mCc = getStringFromAddressArray(email.getRecipients(Message.RecipientType.CC));
-            mSentDate = email.getSentDate();
             mSubject = email.getSubject();
             mBody = email.getContent().toString();
+
+            DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.getDefault());
+            mSentDate = dateFormat.format(email.getSentDate());
 
         } catch (MessagingException e) {
             Log.e("Email() MessagingExc", e.getMessage());
@@ -44,6 +52,33 @@ public class Email {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mId);
+        dest.writeString(mFrom);
+        dest.writeString(mTo);
+        dest.writeString(mCc);
+        dest.writeString(mSentDate);
+        dest.writeString(mSubject);
+        dest.writeString(mBody);
+    }
+
+    public static final Parcelable.Creator<Email> CREATOR
+            = new Parcelable.Creator<Email>() {
+        public Email createFromParcel(Parcel in) {
+            return new Email(in);
+        }
+
+        public Email[] newArray(int size) {
+            return new Email[size];
+        }
+    };
 
     private String getStringFromAddressArray(Address[] addresses) {
         if (addresses != null) {
@@ -86,21 +121,13 @@ public class Email {
         mCc = cc;
     }
 
-    public Date getSentDate() {
+    public String getSentDate() {
         return mSentDate;
     }
 
-    public String getSentDateString() {
-        if (mSentDate == null) {
-            return "";
-        } else {
-            DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.getDefault());
-            return dateFormat.format(mSentDate);
-        }
-    }
-
     public void setSentDate(Date sentDate) {
-        mSentDate = sentDate;
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.getDefault());
+        mSentDate = dateFormat.format(sentDate);
     }
 
     public String getSubject() {
