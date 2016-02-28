@@ -26,6 +26,5 @@ public class EmailDetailActivity extends AppCompatActivity {
           .add(android.R.id.content, fragment)
           .commit();
     }
-
   }
 }

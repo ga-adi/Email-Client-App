@@ -1,15 +1,16 @@
 package com.boloutaredoubeni.emailapp.fragments;
 
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
-import com.boloutaredoubeni.emailapp.models.Email;
 import com.boloutaredoubeni.emailapp.R;
+import com.boloutaredoubeni.emailapp.databinding.FragmentEmailDetailBinding;
+import com.boloutaredoubeni.emailapp.models.Email;
 
 /**
  * Copyright 2016 Boloutare Doubeni
@@ -34,21 +35,19 @@ public class EmailDetailFragment extends Fragment {
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    mEmail = (Email) getArguments().getSerializable("Email");
+    mEmail = (Email)getArguments().getSerializable("Email");
   }
 
   @Nullable
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
-    View view =
-        inflater.inflate(R.layout.fragment_email_detail, container, false);
+    FragmentEmailDetailBinding binding =
+        FragmentEmailDetailBinding.inflate(inflater, container, false);
 
     if (mEmail != null) {
-      ((TextView)view.findViewById(R.id.msg_txt)).setText(mEmail.getBody());
+      binding.setEmail(mEmail);
     }
-    return view;
+    return binding.getRoot();
   }
-
-  public void setEmail(Email email) { mEmail = email; }
 }

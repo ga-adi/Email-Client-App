@@ -73,7 +73,7 @@ public class InboxFragment extends Fragment {
   @Override
   public void onActivityCreated(@Nullable Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    mAdapter = new InboxAdapter(new ArrayList<Email>());
+    mAdapter = new InboxAdapter(new ArrayList<Email>(), getContext());
     LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
     mRecyclerView.setAdapter(mAdapter);
     mRecyclerView.setLayoutManager(layoutManager);
@@ -126,6 +126,8 @@ public class InboxFragment extends Fragment {
   }
 
   /**
+   * FIXME: Retain emails in a database some how and check that first
+   *
    * The activity that implements this interface must send the data to the
    * detail activity
    */
@@ -197,15 +199,20 @@ public class InboxFragment extends Fragment {
       ArrayList<Message> messages = new ArrayList<>();
       ArrayList<Email> emails = new ArrayList<>();
 
-      ListMessagesResponse response =
-          mService.users().messages().list(user).execute();
+      ListMessagesResponse response = mService.users()
+                                          .messages()
+                                          .list(user)
+                                          .setIncludeSpamTrash(false)
+                                          .execute();
       messages.addAll(response.getMessages());
 
       for (final Message message : messages) {
         String id = message.getId();
         Message msg =
             mService.users().messages().get(user, message.getId()).execute();
-        emails.add(new Email(id, msg.getSnippet()));
+
+        Email email = Email.createFrom(msg);
+        emails.add(email);
       }
 
       return emails;

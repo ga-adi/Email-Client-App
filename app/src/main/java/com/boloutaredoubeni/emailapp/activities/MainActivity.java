@@ -9,11 +9,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 
 import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.fragments.EmailDetailFragment;
@@ -57,6 +59,14 @@ public class MainActivity
                           settings.getString(PREF_ACCOUNT_NAME, null));
 
     setContentView(R.layout.activity_main);
+
+    FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+    fab.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // TODO: Start A create Email Activity
+      }
+    });
 
     FragmentManager manager = getSupportFragmentManager();
     FragmentTransaction transaction = manager.beginTransaction();
@@ -125,7 +135,7 @@ public class MainActivity
       // TODO: make sure the recycler highlights the proper item
       FragmentManager fm = getSupportFragmentManager();
       FragmentTransaction ft = fm.beginTransaction();
-      EmailDetailFragment detailFragment = new  EmailDetailFragment();
+      EmailDetailFragment detailFragment = new EmailDetailFragment();
       ft.replace(R.id.email_container, detailFragment);
       ft.commit();
     } else {
@@ -133,7 +143,6 @@ public class MainActivity
       intent.putExtra("Email", email);
       startActivity(intent);
     }
-
   }
 
   private boolean isGooglePlayServicesAvailable() {
