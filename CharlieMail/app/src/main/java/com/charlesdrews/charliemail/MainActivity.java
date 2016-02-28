@@ -13,8 +13,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -27,11 +25,12 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String SHARED_PREFS_KEY = MainActivity.class.getPackage().getName() + ".SHARED_PREFS";
     public static final String SELECTED_EMAIL_KEY = "selectedEmailKey";
-    public static final int REQUEST_ACCOUNT_PICKER = 1000;
+    public static final String COMPOSE_INDICATOR_KEY = "composeIndicator";
+    private static final int REQUEST_ACCOUNT_PICKER = 1000;
     public static final int REQUEST_AUTHORIZATION = 1001;
-    public static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
-    private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { GmailScopes.GMAIL_MODIFY };
+    private static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
+    public static final String PREF_ACCOUNT_NAME = "accountName";
+    public static final String[] SCOPES = { GmailScopes.GMAIL_MODIFY };
 
     private GoogleAccountCredential mCredential;
     private String mAuthResultMsg;
@@ -108,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     .commit();
         } else {
             Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            bundle.putBoolean(COMPOSE_INDICATOR_KEY, false);
             intent.putExtras(bundle);
             startActivity(intent);
         }
@@ -116,10 +116,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            //TODO - set on click listeners for other components of email list item
-            case R.id.email_list_layout:
-                break;
             case R.id.fab:
+                if (mTwoPanes) {
+                    ComposeFragment composeFragment = new ComposeFragment();
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.detail_fragment_container, composeFragment)
+                            .commit();
+                } else {
+                    Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                    intent.putExtra(COMPOSE_INDICATOR_KEY, true);
+                    startActivity(intent);
+                }
                 //TODO - compose new email
                 break;
             default:

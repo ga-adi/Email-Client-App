@@ -1,9 +1,9 @@
 package com.charlesdrews.charliemail;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +16,6 @@ import android.widget.TextView;
  */
 public class DetailFragment extends Fragment {
     private Email mEmail;
-    private TextView mFrom, mTo, mCc, mSentDate, mSubject; //, mBody;
-    private WebView mBody;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,22 +31,21 @@ public class DetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
-        mFrom = (TextView) rootView.findViewById(R.id.detail_from);
-        mTo = (TextView) rootView.findViewById(R.id.detail_to);
-        mCc = (TextView) rootView.findViewById(R.id.detail_cc);
-        mSentDate = (TextView) rootView.findViewById(R.id.detail_date);
-        mSubject = (TextView) rootView.findViewById(R.id.detail_subject);
-        //mBody = (TextView) rootView.findViewById(R.id.detail_body);
-        mBody = (WebView) rootView.findViewById(R.id.detail_body);
-
         if (mEmail != null) {
+            TextView mFrom = (TextView) rootView.findViewById(R.id.detail_from);
+            TextView mTo = (TextView) rootView.findViewById(R.id.detail_to);
+            TextView mCc = (TextView) rootView.findViewById(R.id.detail_cc);
+            TextView mSentDate = (TextView) rootView.findViewById(R.id.detail_date);
+            TextView mSubject = (TextView) rootView.findViewById(R.id.detail_subject);
+            WebView mBody = (WebView) rootView.findViewById(R.id.detail_body);
+
             mFrom.setText(String.format(getString(R.string.detail_from), mEmail.getFrom()));
             mTo.setText(String.format(getString(R.string.detail_to), mEmail.getTo()));
             mCc.setText(String.format(getString(R.string.detail_cc), mEmail.getCc()));
             mSentDate.setText(mEmail.getSentDate());
             mSubject.setText(mEmail.getSubject());
-            //mBody.setText(Html.fromHtml(mEmail.getBody()));
-            mBody.loadData(mEmail.getBody(), "text/html", "utf-8");
+            mBody.loadData(mEmail.getBody(), "text/html", "UTF-8");
+            mBody.setBackgroundColor(Color.TRANSPARENT);
         }
         return rootView;
     }

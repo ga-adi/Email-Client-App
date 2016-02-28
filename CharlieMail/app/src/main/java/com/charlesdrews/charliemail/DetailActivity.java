@@ -1,5 +1,6 @@
 package com.charlesdrews.charliemail;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,12 +19,31 @@ public class DetailActivity extends AppCompatActivity {
 
         //TODO - if user rotates to landscape while here, should revert to MainActivity instead
 
+        // Check if sent here by MainActivity in order to compose an email
+        boolean compose = getIntent().getExtras().getBoolean(MainActivity.COMPOSE_INDICATOR_KEY);
+        if (compose) {
+            ComposeFragment composeFragment = new ComposeFragment();
+            if (savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.detail_fragment_container, composeFragment)
+                        .commit();
+            } else {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.detail_fragment_container, composeFragment)
+                        .commit();
+            }
+            return;
+        }
+
+        // If not here to compose, then here to view an email
         Email email = null;
         if (getIntent().getExtras() != null) {
             email = getIntent().getParcelableExtra(MainActivity.SELECTED_EMAIL_KEY);
         }
 
-        if (email != null) {
+        if (email == null) {
+            startActivity(new Intent(DetailActivity.this, MainActivity.class));
+        } else {
             Bundle arguments = new Bundle();
             arguments.putParcelable(MainActivity.SELECTED_EMAIL_KEY, email);
 
@@ -45,9 +65,9 @@ public class DetailActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO - make compose email button
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(DetailActivity.this, MainActivity.class);
+                intent.putExtra(MainActivity.COMPOSE_INDICATOR_KEY, true);
+                startActivity(intent);
             }
         });
     }

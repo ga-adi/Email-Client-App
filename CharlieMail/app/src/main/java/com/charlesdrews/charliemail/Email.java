@@ -2,7 +2,6 @@ package com.charlesdrews.charliemail;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
