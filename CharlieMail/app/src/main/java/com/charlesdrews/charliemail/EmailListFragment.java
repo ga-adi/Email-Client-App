@@ -1,5 +1,10 @@
 package com.charlesdrews.charliemail;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,14 +15,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 
@@ -36,9 +44,11 @@ import javax.mail.internet.MimeMessage;
  * Created by charlie on 2/25/16.
  */
 public class EmailListFragment extends Fragment {
+    private List<String> mLabels;
     private ArrayList<Email> mEmails;
     private EmailRecyclerAdapter mAdapter;
-    private List<String> mLabels;
+    private GoogleAccountCredential mCredential;
+    private ProgressBar mProgressBar;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,13 +62,34 @@ public class EmailListFragment extends Fragment {
 
             mEmails = new ArrayList<>();
             mAdapter = new EmailRecyclerAdapter(mEmails);
-
-            //SharedPreferences settings = getContext().getSharedPreferences("com.example.charlie", Context.MODE_PRIVATE);
-            GoogleAccountCredential credential = ((MainActivity) getActivity()).getCredential();
-            GetEmailListAsyncTask task = new GetEmailListAsyncTask(credential);
-            task.execute();
-            //getEmails(selectedTab);
         }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mCredential = ((MainActivity) getActivity()).getCredential();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mCredential.getSelectedAccountName() == null) {
+            ((MainActivity) getActivity()).chooseAccount();
+        } else {
+            if (isDeviceOnline()) {
+                new GetEmailListAsyncTask(mCredential).execute();
+            } else {
+                Toast.makeText(getActivity(), "No network connection available.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private boolean isDeviceOnline() {
+        ConnectivityManager connMgr =
+                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected());
     }
 
     @Nullable
@@ -69,6 +100,8 @@ public class EmailListFragment extends Fragment {
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(container.getContext()));
         recyclerView.setAdapter(mAdapter);
+
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.email_list_progress_bar);
 
         return rootView;
     }
@@ -87,6 +120,12 @@ public class EmailListFragment extends Fragment {
         }
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            fadeInProgressBar(1000);
+        }
+
+        @Override
         protected List<String> doInBackground(Void... params) {
             try {
                 return getDataFromApi();
@@ -102,6 +141,8 @@ public class EmailListFragment extends Fragment {
         @Override
         protected void onPostExecute(List<String> emails) {
             super.onPostExecute(emails);
+
+            fadeOutProgressBar(1000);
 
             mEmails.clear();
             if (emails != null) {
@@ -139,6 +180,57 @@ public class EmailListFragment extends Fragment {
                 }
             }
             return emails;
+        }
+
+        @Override
+        protected void onCancelled() {
+            fadeOutProgressBar(1000);
+
+            if (mLastError != null) {
+                if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
+                    ((MainActivity) getActivity()).showGooglePlayServicesAvailabilityErrorDialog(
+                            ((GooglePlayServicesAvailabilityIOException) mLastError)
+                                    .getConnectionStatusCode());
+                } else if (mLastError instanceof UserRecoverableAuthIOException) {
+                    startActivityForResult(
+                            ((UserRecoverableAuthIOException) mLastError).getIntent(),
+                            MainActivity.REQUEST_AUTHORIZATION);
+                } else {
+                    Toast.makeText(getContext(),
+                            "The following error occurred:\n" + mLastError.getMessage(),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+            } else {
+                Toast.makeText(getContext(), "Request cancelled.", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        private void fadeInProgressBar(int durationInMs) {
+            mProgressBar.animate()
+                    .alpha(1f)
+                    .setDuration(durationInMs)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            super.onAnimationStart(animation);
+                            mProgressBar.setAlpha(0f);
+                            mProgressBar.setVisibility(View.VISIBLE);
+                        }
+                    });
+        }
+
+        private void fadeOutProgressBar(int durationInMs) {
+            mProgressBar.animate()
+                    .alpha(0f)
+                    .setDuration(durationInMs)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            super.onAnimationEnd(animation);
+                            mProgressBar.setVisibility(View.GONE);
+                        }
+                    });
         }
     }
 }

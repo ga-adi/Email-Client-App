@@ -16,6 +16,8 @@ public class DetailActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //TODO - if user rotates to landscape while here, should revert to MainActivity instead
+
         //TODO - retrieve just the email ID and do another API call to get the rest of the detail
         String subject = null;
         if (getIntent().getExtras() != null) {

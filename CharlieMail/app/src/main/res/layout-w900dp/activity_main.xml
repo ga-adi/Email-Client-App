@@ -25,14 +25,8 @@
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
         </android.support.design.widget.AppBarLayout>
 
-        <TextView
-            android:id="@+id/output"
-            android:layout_below="@id/app_bar_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
         <LinearLayout
-            android:layout_below="@id/output"
+            android:layout_below="@id/app_bar_layout"
             android:orientation="horizontal"
             android:divider="@drawable/divider"
             android:showDividers="middle"
