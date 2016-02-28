@@ -15,4 +15,7 @@
         android:title="Refresh"
         android:icon="@drawable/refresh"
         app:showAsAction ="ifRoom"/>
+    <item android:id="@+id/action_draft"
+        android:title="Drafts"
+        app:showAsAction="never"/>
 </menu>

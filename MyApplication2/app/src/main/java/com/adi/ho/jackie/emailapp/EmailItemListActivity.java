@@ -53,8 +53,10 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.StringUtils;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailRequest;
 import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.ListMessagesResponse;
@@ -81,11 +83,13 @@ import java.util.Properties;
 
 import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 
+import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import org.jsoup.Jsoup;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -96,7 +100,7 @@ import javax.net.ssl.HttpsURLConnection;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class EmailItemListActivity extends AppCompatActivity implements ComposeFragment.SendEmailTaskListener, EmailViewHolder.MakeSecondFragmentListener {
+public class EmailItemListActivity extends AppCompatActivity implements ComposeFragment.SendEmailTaskListener, EmailViewHolder.MakeSecondFragmentListener, ComposeFragment.SaveDraftsListener {
     public GoogleAccountCredential mCredential;
     ProgressDialog mProgress;
     EmailRecyclerAdapter mEmailRecyclerAdapter;
@@ -361,7 +365,6 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             try {
                 for (String id : idStrings) {
                     Message message = mService.users().messages().get("me", id).execute();
-
                     for (MessagePartHeader messagePartHeader : message.getPayload().getHeaders()) {
                         if (messagePartHeader.getName().contains(usercred.getSelectedAccountName())) {
                             continue;
@@ -382,6 +385,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                         }
                     }
 
+
                     MessagePart firstMessagePart;
                     if (message.getPayload().getParts() != null) {
                         firstMessagePart = message.getPayload().getParts().get(0);
@@ -390,11 +394,12 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                     } else {
                         String emailBody = StringUtils.newStringUtf8(Base64.decodeBase64(message.getPayload().getBody().getData()));
                         emailHash.put("BODY", emailBody);
+
                     }
 
                     emailHash.put("SNIPPET", message.getSnippet());
                     emailHash.put("ID", id);
-                    emailHash.put("FAVORITE", "0");
+                    emailHash.put("DRAFT", "0");
 
                     Email email = new Email(emailHash);
                     emailHeaderList.add(email);
@@ -404,6 +409,8 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 }
 
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -548,7 +555,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 emailHashFromDb.put("SUBJECT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT)));
                 emailHashFromDb.put("ID", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_ID)));
                 emailHashFromDb.put("SNIPPET", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SNIPPET)));
-                emailHashFromDb.put("FAVORITE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_FAVORITE)));
+                emailHashFromDb.put("DRAFT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DRAFT)));
                 emailListFromDb.add(new Email(emailHashFromDb));
                 cursor.moveToNext();
             }
@@ -608,8 +615,71 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 e.printStackTrace();
             }
             return null;
+
         }
     }
+
+    private class SaveDraftAsyncTask extends AsyncTask<HashMap,Void,Void>{
+        private com.google.api.services.gmail.Gmail mService = null;
+        public SaveDraftAsyncTask(GoogleAccountCredential credential){
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            com.google.api.client.json.JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.gmail.Gmail.Builder(
+                    transport, jsonFactory, credential)
+                    .setApplicationName("Gmail API Android")
+                    .build();
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(EmailItemListActivity.this, "Draft saved.", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected Void doInBackground(HashMap... params) {
+            HashMap<String,String> draftContents = params[0];
+            String subject ="";
+            String recipient = "";
+            String body = "";
+            String sender = "me";
+
+            //detect whether
+
+            if (draftContents.get("SUBJECT") != null){
+                subject = draftContents.get("SUBJECT");
+            } else {
+                draftContents.put("SUBJECT","");
+            }
+            if (draftContents.get("BODY") != null){
+                body = draftContents.get("BODY");
+            } else {
+                draftContents.put("BODY", "");
+            }
+            if (draftContents.get("RECIPIENT") != null){
+                recipient = draftContents.get("RECIPIENT");
+            } else {
+                draftContents.put("RECIPIENT", "");
+            }
+
+            try {
+                MimeMessage mimeMessage = createEmail(recipient,sender,subject,body);
+                Draft draft = createDraft(mService, sender, mimeMessage);
+                String draftId = draft.getId();
+                draftContents.put("ID",draftId);
+                mHelper.saveDraftToDb(draftContents);
+
+            } catch (MessagingException e) {
+                e.printStackTrace();
+                cancel(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+                cancel(true);
+            }
+
+            return null;
+        }
+    }
+
 
     public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
         Properties props = new Properties();
@@ -635,34 +705,15 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         return message;
     }
 
-    private String getTextFromMessage(Message message) throws Exception {
-        String result = "";
-        if (message.isMimeType("text/plain")) {
-            result = message.getContent().toString();
-        } else if (message.isMimeType("multipart/*")) {
-            MimeMultipart mimeMultipart = (MimeMultipart) message.getContent();
-            result = getTextFromMimeMultipart(mimeMultipart);
-        }
-        return result;
-    }
+    public static Draft createDraft(Gmail service, String userId, MimeMessage email) throws MessagingException,IOException{
+        Message message = createMessageWithEmail(email);
+        Draft draft = new Draft();
+        draft.setMessage(message);
+        draft = service.users().drafts().create(userId, draft).execute();
 
-    private String getTextFromMimeMultipart(
-            MimeMultipart mimeMultipart) throws Exception{
-        String result = "";
-        int count = mimeMultipart.getCount();
-        for (int i = 0; i < count; i++) {
-            BodyPart bodyPart = mimeMultipart.getBodyPart(i);
-            if (bodyPart.isMimeType("text/plain")) {
-                result = result + "\n" + bodyPart.getContent();
-                break; // without break same text appears twice in my tests
-            } else if (bodyPart.isMimeType("text/html")) {
-                String html = (String) bodyPart.getContent();
-                result = result + "\n" + org.jsoup.Jsoup.parse(html).text();
-            } else if (bodyPart.getContent() instanceof MimeMultipart){
-                result = result + getTextFromMimeMultipart((MimeMultipart)bodyPart.getContent());
-            }
-        }
-        return result;
+        System.out.println("draft id:" + draft.getId());
+        return draft;
+
     }
 
     public void setRecyclerView(List<Email> recyclerList) {
@@ -674,5 +725,13 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList, getSupportFragmentManager());
         emaillistRecycler.setAdapter(emailRecyclerAdapter);
     }
+
+    public void saveDraft(HashMap<String,String> draftMap){
+        new SaveDraftAsyncTask(mCredential).execute(draftMap);
+    }
+
+
+
+
 
 }

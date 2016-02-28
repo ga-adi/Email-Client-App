@@ -40,4 +40,6 @@ dependencies {
 //    compile 'javax.mail:javax.mail-api:1.5.5'
     compile 'com.sun.mail:android-mail:1.5.5'
     compile 'com.sun.mail:android-activation:1.5.5'
+    compile 'org.jsoup:jsoup:1.7.2'
+
 }
