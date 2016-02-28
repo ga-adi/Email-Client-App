@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.adi.ho.jackie.emailapp.Email;
 
@@ -13,9 +14,9 @@ import com.adi.ho.jackie.emailapp.Email;
  */
 public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "MAILDRAFTS";
+    private static final String DATABASE_NAME = "MAILEMAILS";
     private static final int DATABASE_VERSION = 1;
-    private static final String MAIL_DRAFT_TABLE = "DRAFTS";
+    private static final String MAIL_EMAIL_TABLE = "EMAILS";
     public static final String MAIL_ID = "ID";
     public static final String MAIL_DATE = "DATE";
     public static final String MAIL_BODY = "BODY";
@@ -23,7 +24,9 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
     public static final String MAIL_SENDER = "SENDER";
     public static final String MAIL_SNIPPET = "SNIPPET";
     public static final String MAIL_FAVORITE = "FAVORITE";
-    private static final String[] MAIL_COLUMNS = {MAIL_ID, MAIL_SENDER ,MAIL_RECIPIENT,MAIL_DATE,MAIL_SNIPPET,MAIL_FAVORITE,MAIL_BODY};
+    public static final String MAIL_SUBJECT = "SUBJECT";
+    private static final String[] MAIL_COLUMNS = {MAIL_ID, MAIL_SENDER ,MAIL_RECIPIENT,MAIL_DATE,MAIL_SNIPPET,MAIL_FAVORITE,MAIL_SUBJECT,MAIL_BODY};
+    private static final String[] MAIL_COLUMNS_LISTACT = {MAIL_ID, MAIL_SENDER,MAIL_DATE,MAIL_SNIPPET,MAIL_FAVORITE,MAIL_SUBJECT};
 
 
     private Context context;
@@ -45,19 +48,20 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + MAIL_DRAFT_TABLE + " ("
+        db.execSQL("CREATE TABLE " + MAIL_EMAIL_TABLE + " ("
                 + MAIL_ID + " TEXT PRIMARY KEY, " +
                 MAIL_SENDER + " TEXT, " +
                 MAIL_RECIPIENT + " TEXT, " +
                 MAIL_DATE + " TEXT, " +
                 MAIL_SNIPPET + " TEXT, " +
                 MAIL_FAVORITE + " TEXT, " +
+                MAIL_SUBJECT + " TEXT, " +
                 MAIL_BODY + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXIST " + MAIL_DRAFT_TABLE);
+        db.execSQL("DROP TABLE IF EXIST " + MAIL_EMAIL_TABLE);
         onCreate(db);
     }
 
@@ -65,17 +69,30 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put(MAIL_ID, email.getId());
         contentValues.put(MAIL_RECIPIENT, email.getRecipient());
+        contentValues.put(MAIL_SENDER, email.getSender());
         contentValues.put(MAIL_DATE, email.getDate());
         contentValues.put(MAIL_SNIPPET, email.getSnippet());
         contentValues.put(MAIL_FAVORITE, email.getFavorite());
         contentValues.put(MAIL_BODY, email.getBody());
-        mDatabase.insert(MAIL_DRAFT_TABLE, null, contentValues);
+        contentValues.put(MAIL_SUBJECT, email.getSubject());
+        if (!mDatabase.query(MAIL_EMAIL_TABLE,MAIL_COLUMNS, MAIL_ID + " = ? ", new String[]{email.getId()}, null, null, null, null).moveToFirst()) {
+            Log.d("DATABASE", "Inserting in to db, id: " + email.getId());
+            mDatabase.insert(MAIL_EMAIL_TABLE, null, contentValues);
+        }
+
     }
 
     public Cursor getEmailById(String id){
 
-        Cursor cursor = mDatabase.query(MAIL_DRAFT_TABLE, MAIL_COLUMNS, MAIL_ID + " ? ",
+        Cursor cursor = mDatabase.query(MAIL_EMAIL_TABLE, MAIL_COLUMNS, MAIL_ID + " = ? ",
                 new String[]{id}, null, null, null, null);
         return cursor;
+    }
+
+    public Cursor getAllEmailsFromDb(){
+
+        Cursor cursor = mDatabase.query(MAIL_EMAIL_TABLE, MAIL_COLUMNS_LISTACT, null, null, null, null, null);
+        return cursor;
+
     }
 }

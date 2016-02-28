@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
@@ -36,6 +37,11 @@ public class EmailItemDetailActivity extends AppCompatActivity {
     private String mBody;
     private String mId;
 
+    public TextView mSenderText;
+    public TextView mRecipientText;
+    public TextView mDateText;
+    public TextView mBodyText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,8 +49,11 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         setSupportActionBar(toolbar);
 
-        TextView emailBody = (TextView)findViewById(R.id.emailitem_detail);
-        ImageView emailImageBody = (ImageView)findViewById(R.id.email_imagedetail);
+        mBodyText = (TextView) findViewById(R.id.email_body_detail);
+        mDateText = (TextView) findViewById(R.id.email_date_detail);
+        mRecipientText = (TextView) findViewById(R.id.email_recipient_detail);
+        mSenderText = (TextView) findViewById(R.id.email_sender_detail);
+
         mId = getIntent().getStringExtra("EMAILID");
 
 
@@ -95,9 +104,9 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class GetEmailFromDBWithIdAsyncTask extends AsyncTask<String,Void,HashMap<String,String>>{
+    private class GetEmailFromDBWithIdAsyncTask extends AsyncTask<String, Void, HashMap<String, String>> {
         MailDatabaseOpenHelper helper;
-        HashMap<String,String> emailIdContents;
+        HashMap<String, String> emailIdContents;
 
         @Override
         protected void onPreExecute() {
@@ -107,9 +116,10 @@ public class EmailItemDetailActivity extends AppCompatActivity {
         }
 
         @Override
-        protected HashMap<String,String> doInBackground(String... params) {
+        protected HashMap<String, String> doInBackground(String... params) {
             String id = params[0];
             Cursor cursor = helper.getEmailById(id);
+            cursor.moveToFirst();
             emailIdContents.put("RECIPIENT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_RECIPIENT)));
             emailIdContents.put("SENDER", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER)));
             emailIdContents.put("BODY", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_BODY)));
@@ -125,8 +135,14 @@ public class EmailItemDetailActivity extends AppCompatActivity {
             mRecipient = hashMap.get("RECIPIENT").toString();
             mSender = hashMap.get("SENDER").toString();
 
-
-
+            mSenderText.setText(mSender);
+            mRecipientText.setText(mRecipient);
+            mDateText.setText("Date Received: " + mDate);
+            if (mBody.contains("html")) {
+                mBodyText.setText(Html.fromHtml(mBody));
+            } else {
+                mBodyText.setText(mBody);
+            }
 
         }
     }

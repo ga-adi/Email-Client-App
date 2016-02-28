@@ -38,6 +38,7 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailViewHolder> 
         holder.emailLabel.setText(emailList.get(position).getSender());
         holder.emailSnippet.setText(emailList.get(position).getSnippet());
         holder.emailId.setText(emailList.get(position).getId());
+        holder.emailSubject.setText(emailList.get(position).getSubject());
     }
 
     @Override
