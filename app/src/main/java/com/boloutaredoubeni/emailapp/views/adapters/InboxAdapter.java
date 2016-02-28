@@ -1,6 +1,7 @@
 package com.boloutaredoubeni.emailapp.views.adapters;
 
 import android.content.Context;
+import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,13 +31,14 @@ public class InboxAdapter
   public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
     LayoutInflater inflater = LayoutInflater.from(parent.getContext());
     View itemView = inflater.inflate(R.layout.message_item, null);
-    return new ViewHolder(itemView, inflater);
+    return new ViewHolder(itemView);
   }
 
   @Override
   public void onBindViewHolder(ViewHolder holder, int position) {
     Email email = mEmails.get(position);
     holder.getBinding().setEmail(email);
+    holder.getBinding().executePendingBindings();
   }
 
   @Override
@@ -47,9 +49,9 @@ public class InboxAdapter
   static class ViewHolder extends RecyclerView.ViewHolder {
     private MessageItemBinding mBinding;
 
-    public ViewHolder(View view, LayoutInflater inflater) {
+    public ViewHolder(View view) {
       super(view);
-      mBinding = MessageItemBinding.inflate(inflater);
+      mBinding = DataBindingUtil.bind(view);
     }
 
     public MessageItemBinding getBinding() { return mBinding; }
