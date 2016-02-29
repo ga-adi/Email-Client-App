@@ -1,5 +1,6 @@
 package com.example.gmailquickstart;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -75,7 +76,19 @@ public class emailDetailFragment extends Fragment {
 
         // Show the dummy content as text in a TextView.
         if (mEmail != null) {
-            ((WebView) rootView.findViewById(R.id.web_view)).loadData(mEmail.getBodyData(),"text/html",null);
+            Log.d("emailDetailFragment", "email is not null, aboout to call webview");
+           // ((WebView) rootView.findViewById(R.id.web_view)).loadData(mEmail.getBodyData(), "text/html", null);
+            WebView webView = (WebView)rootView.findViewById((R.id.web_view));
+            webView.loadData(mEmail.getBodyData(), "text/html", null);
+            if(webView==null){
+                Log.d("emailDetailFragment","webview is null");
+            }
+            //TextView backUpTextView  =(TextView) rootView.findViewById(R.id.backup_textView);
+            int red = (int)(Math.random()*255)+1;
+            int blue = (int)(Math.random()*255)+1;
+            int green = (int)(Math.random()*255)+1;
+            //rootView.setBackgroundColor(Color.rgb(red, blue, green));
+            webView.setBackgroundColor(Color.rgb(red, blue, green));
         }
 
         return rootView;

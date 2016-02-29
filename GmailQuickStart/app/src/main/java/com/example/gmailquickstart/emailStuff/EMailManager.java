@@ -64,6 +64,7 @@ public class EMailManager {
         return true;
     }
 
+
     public void endUpdate(){
         mLastUpdated = System.currentTimeMillis();
     }

@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -106,14 +107,32 @@ public class EmailListActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent toComposeIntent = new Intent(EmailListActivity.this,ComposeActivity.class);
-                startActivityForResult(toComposeIntent,COMPOSE_EMAIL);
+                Intent toComposeIntent = new Intent(EmailListActivity.this, ComposeActivity.class);
+                startActivityForResult(toComposeIntent, COMPOSE_EMAIL);
             }
         });
 
         View recyclerView = findViewById(R.id.email_list);
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
+
+
+        Button inboxButton = (Button)findViewById(R.id.inboxDirButton);
+        inboxButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new MakeRequestTask(mCredential).execute();
+            }
+        });
+        Button draftDirButton = (Button)findViewById(R.id.draftDirButton);
+        draftDirButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MakeRequestTask(mCredential).execute("DRAFT");
+            }
+        });
+
 
         if (findViewById(R.id.email_detail_container) != null) {
             // The detail container view will be present only in the
@@ -312,15 +331,20 @@ public class EmailListActivity extends AppCompatActivity {
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Log.d("EmailListActivity","inside onclick listener");
                     if (mTwoPane) {
+                        Log.d("EmailListActivity","about to do detail activity fragment with id of "+holder.mItem.getTheID());
                         Bundle arguments = new Bundle();
                         arguments.putString(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
+
                         emailDetailFragment fragment = new emailDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.email_detail_container, fragment)
                                 .commit();
                     } else {
+
+
                         Context context = v.getContext();
                         Intent intent = new Intent(context, emailDetailActivity.class);
                         intent.putExtra(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
@@ -365,7 +389,7 @@ public class EmailListActivity extends AppCompatActivity {
      * An asynchronous task that handles the Gmail API call.
      * Placing the API calls in their own task ensures the UI stays responsive.
      */
-    private class MakeRequestTask extends AsyncTask<Void, Void, List<String>> {
+    private class MakeRequestTask extends AsyncTask<String, Void, Void> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
 
@@ -383,14 +407,15 @@ public class EmailListActivity extends AppCompatActivity {
          * @param params no parameters needed for this task.
          */
         @Override
-        protected List<String> doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
             try {
-                return getDataFromApi();
+                    getDataFromApi(params);
             } catch (Exception e) {
                 mLastError = e;
                 cancel(true);
                 return null;
             }
+            return null;
         }
 
         /**
@@ -398,17 +423,26 @@ public class EmailListActivity extends AppCompatActivity {
          * @return List of Strings labels.
          * @throws IOException
          */
-        private List<String> getDataFromApi() throws IOException {
+        private void getDataFromApi(String[] theSelectedLabels) throws IOException {
             // Get the labels in the user's account.
             String user = "me";
-            List<String> labels = new ArrayList<String>();
+
 
 
 
             //get message id
             ArrayList<String> theLabels = new ArrayList<>();
-            theLabels.add("INBOX");
-            theLabels.add("CATEGORY_PERSONAL");
+            if(theSelectedLabels==null ||theSelectedLabels.length==0) {
+                theLabels.add("INBOX");
+                theLabels.add("CATEGORY_PERSONAL");
+
+            }else{
+                for(int i=0;i<theSelectedLabels.length;i++){
+                    theLabels.add(theSelectedLabels[i]);
+                    Log.d("EmailListActivity "," adding label "+theSelectedLabels[i]);
+                }
+            }
+
             //ListMessagesResponse response =mService.users().messages().list(user).execute();
             ListMessagesResponse response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).execute();
             //ListMessagesResponse response = mService.users().messages().list(user).setQ("google").execute();
@@ -435,33 +469,35 @@ public class EmailListActivity extends AppCompatActivity {
                     }
                 }
                 ArrayList<MessagePart> messageParts= (ArrayList)actualMessage.getPayload().getParts();
-                Log.d("EmailListActivity","About to loop through messageParts");
+                Log.d("EmailListActivity","About to loop through messageParts of message "+message.getId());
 
                 String htmlData="";
                 String plainData="";
-                for(MessagePart m : messageParts){
-                    if(m.getMimeType().contains("multipart")){
-                        Log.d("EmailListActivity","This message contains multipart");
-                        ArrayList<MessagePart>parts = (ArrayList)m.getParts();
-                        Log.d("EmailListActivity","size is "+parts.size());
-                        for(MessagePart p:parts){
-                            Log.d("EmailListActivity","Looping through message parts "+p.getMimeType());
-                            if(p.getMimeType().contains("html")){
-                                Log.d("EmailListActivity", "attempting to access html data");
-                                htmlData=new String(Base64.decodeBase64(p.getBody().getData()));
-                                Log.d("EmailListActivity", "attempting to access html data "+htmlData);
-                            }else if(p.getMimeType().contains("plain")){
-                                Log.d("EmailListActivity", "attempting to access plain data");
-                                plainData=new String(Base64.decodeBase64(p.getBody().getData()));
-                                Log.d("EmailListActivity", "attempting to access plain data "+plainData);
+                if(messageParts!=null) {
+                    for (MessagePart m : messageParts) {
+                        if (m.getMimeType().contains("multipart")) {
+                            Log.d("EmailListActivity", "This message contains multipart");
+                            ArrayList<MessagePart> parts = (ArrayList) m.getParts();
+                            Log.d("EmailListActivity", "size is " + parts.size());
+                            for (MessagePart p : parts) {
+                                Log.d("EmailListActivity", "Looping through message parts " + p.getMimeType());
+                                if (p.getMimeType().contains("html")) {
+                                    Log.d("EmailListActivity", "attempting to access html data");
+                                    htmlData = new String(Base64.decodeBase64(p.getBody().getData()));
+                                    Log.d("EmailListActivity", "attempting to access html data " + htmlData);
+                                } else if (p.getMimeType().contains("plain")) {
+                                    Log.d("EmailListActivity", "attempting to access plain data");
+                                    plainData = new String(Base64.decodeBase64(p.getBody().getData()));
+                                    Log.d("EmailListActivity", "attempting to access plain data " + plainData);
+                                }
                             }
+
                         }
 
+
                     }
-
-
-
-
+                }else{
+                        plainData = new String(Base64.decodeBase64(actualMessage.getPayload().getBody().getData()));
                 }
 
 
@@ -469,7 +505,11 @@ public class EmailListActivity extends AppCompatActivity {
                 newEmail.setSnippet(actualMessage.getSnippet());
                 newEmail.setTheID(actualMessage.getId());
                 newEmail.setSubject(emailSubject);
-                newEmail.setBodyData(htmlData);
+                if(htmlData.equals("")){
+                    newEmail.setBodyData(plainData);
+                }else {
+                    newEmail.setBodyData(htmlData);
+                }
                 newEmail.addTo(emailTo);
                 newEmail.setFromData(emailFrom);
                 emailManager.addEmail(newEmail);
@@ -481,7 +521,7 @@ public class EmailListActivity extends AppCompatActivity {
             emailManager.endUpdate();
 
 
-            return labels;
+
         }
 
 
@@ -493,7 +533,7 @@ public class EmailListActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(List<String> output) {
+        protected void onPostExecute(Void aVoid ) {
             mProgress.hide();
             EMailManager eMailManager = EMailManager.getInstance();
             eMailManager.printAllToLog();
@@ -504,6 +544,8 @@ public class EmailListActivity extends AppCompatActivity {
             theAdapter.notifyDataSetChanged();
 
         }
+
+
 
         @Override
         protected void onCancelled() {
