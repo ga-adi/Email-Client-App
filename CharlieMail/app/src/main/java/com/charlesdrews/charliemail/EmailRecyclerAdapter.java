@@ -1,6 +1,5 @@
 package com.charlesdrews.charliemail;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,8 +36,14 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
     public void onBindViewHolder(ViewHolder holder, int position) {
         final Email email = mEmails.get(position);
 
-        //holder.mId.setText(email.getId());
-        holder.mSubject.setText(email.getSubject());
+        holder.mSender.setText(email.getAbbrevFrom());
+        holder.mDate.setText(email.getSentDateShort());
+
+        String subject = (email.getSubject() == null) ? "" : email.getSubject();
+        if (subject.length() > 45) {
+            subject = subject.substring(0, 43) + "...";
+        }
+        holder.mSubject.setText(subject);
 
         try {
             holder.mLayout.setOnClickListener(new View.OnClickListener() {
@@ -60,13 +65,14 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public View mLayout;
-        public TextView mSubject;//, mId;
+        public TextView mSender, mDate, mSubject;
 
         public ViewHolder(View rootView) {
             super(rootView);
             mLayout = rootView.findViewById(R.id.email_list_layout);
+            mSender = (TextView) rootView.findViewById(R.id.email_list_sender);
+            mDate = (TextView) rootView.findViewById(R.id.email_list_date);
             mSubject = (TextView) rootView.findViewById(R.id.email_list_subject);
-            //mId = (TextView) rootView.findViewById(R.id.email_list_id_hidden);
         }
     }
 }

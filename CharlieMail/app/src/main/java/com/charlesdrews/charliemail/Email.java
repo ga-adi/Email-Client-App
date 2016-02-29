@@ -24,7 +24,7 @@ import javax.mail.internet.MimeMessage;
  * Created by charlie on 2/25/16.
  */
 public class Email implements Parcelable {
-    private String mId, mFrom, mTo, mCc, mSentDate, mSubject, mBody;
+    private String mId, mFrom, mTo, mCc, mSentDate, mSentDateShort, mSubject, mBody;
 
     public Email(Parcel in) {
         mId = in.readString();
@@ -32,6 +32,7 @@ public class Email implements Parcelable {
         mTo = in.readString();
         mCc = in.readString();
         mSentDate = in.readString();
+        mSentDateShort = in.readString();
         mSubject = in.readString();
         mBody = in.readString();
     }
@@ -50,6 +51,9 @@ public class Email implements Parcelable {
 
             DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.getDefault());
             mSentDate = dateFormat.format(email.getSentDate());
+
+            dateFormat = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
+            mSentDateShort = dateFormat.format(email.getSentDate());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,6 +106,7 @@ public class Email implements Parcelable {
         dest.writeString(mTo);
         dest.writeString(mCc);
         dest.writeString(mSentDate);
+        dest.writeString(mSentDateShort);
         dest.writeString(mSubject);
         dest.writeString(mBody);
     }
@@ -138,48 +143,34 @@ public class Email implements Parcelable {
         return mFrom;
     }
 
-    public void setFrom(String from) {
-        mFrom = from;
+    public String getAbbrevFrom() {
+        if (mFrom.contains("<")) {
+            return mFrom.split("<")[0];
+        }
+        return mFrom;
     }
 
     public String getTo() {
         return mTo;
     }
 
-    public void setTo(String to) {
-        mTo = to;
-    }
-
     public String getCc() {
         return mCc;
-    }
-
-    public void setCc(String cc) {
-        mCc = cc;
     }
 
     public String getSentDate() {
         return mSentDate;
     }
 
-    public void setSentDate(Date sentDate) {
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.getDefault());
-        mSentDate = dateFormat.format(sentDate);
+    public String getSentDateShort() {
+        return mSentDateShort;
     }
 
     public String getSubject() {
         return mSubject;
     }
 
-    public void setSubject(String subject) {
-        mSubject = subject;
-    }
-
     public String getBody() {
         return mBody;
-    }
-
-    public void setBody(String body) {
-        mBody = body;
     }
 }
