@@ -14,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -67,12 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAuthResultMsg = "Google Play Services required: after installing, close and relaunch this app.";
             }
 
-            //TODO - use toast or snackbar?
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle("Account Authorization");
-            builder.setMessage(mAuthResultMsg);
-            builder.setPositiveButton("OK", null);
-            builder.show();
+            if (!mAuthResultMsg.isEmpty()) {
+                Toast.makeText(MainActivity.this, mAuthResultMsg, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -128,7 +126,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.fab:
                 if (mTwoPanes) {
+                    Bundle bundle = new Bundle();
+                    bundle.putBoolean(COMPOSE_INDICATOR_KEY, true);
+
                     ComposeFragment composeFragment = new ComposeFragment();
+                    composeFragment.setArguments(bundle);
+
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.detail_fragment_container, composeFragment)
                             .commit();
@@ -137,7 +140,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     intent.putExtra(COMPOSE_INDICATOR_KEY, true);
                     startActivity(intent);
                 }
-                //TODO - compose new email
                 break;
             default:
                 break;

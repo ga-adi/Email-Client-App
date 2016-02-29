@@ -11,7 +11,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -133,7 +132,6 @@ public class EmailListFragment extends Fragment {
                 return true;
             } catch (Exception e) {
                 mLastError = e;
-                Log.e("EmailListFragment", e.getMessage());
                 e.printStackTrace();
                 cancel(true);
                 return false;
@@ -171,7 +169,6 @@ public class EmailListFragment extends Fragment {
                         MimeMessage mimeMessage = new MimeMessage(session, new ByteArrayInputStream(emailBytes));
                         mEmails.add(new Email(message.getId(), mimeMessage));
                     } catch (MessagingException e) {
-                        Log.e("EmailListFragment", e.getMessage());
                         e.printStackTrace();
                     }
                 }

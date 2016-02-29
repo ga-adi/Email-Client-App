@@ -16,10 +16,12 @@
         android:layout_width="match_parent"
         android:layout_height="1dp" />
 
+    <!--
     <TextView
         android:id="@+id/email_list_id_hidden"
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+        -->
 
 </RelativeLayout>

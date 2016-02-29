@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdapter.ViewHolder> {
     private String mLabel;
     private ArrayList<Email> mEmails;
-    private Context mContext;
 
     public EmailRecyclerAdapter(String label, ArrayList<Email> emails) {
         mLabel = label;
@@ -28,8 +27,6 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        mContext = parent.getContext();
-
         View holder = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.email_list_item, parent, false);
 
@@ -40,7 +37,7 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
     public void onBindViewHolder(ViewHolder holder, int position) {
         final Email email = mEmails.get(position);
 
-        holder.mId.setText(email.getId());
+        //holder.mId.setText(email.getId());
         holder.mSubject.setText(email.getSubject());
 
         try {
@@ -63,13 +60,13 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public View mLayout;
-        public TextView mSubject, mId;
+        public TextView mSubject;//, mId;
 
         public ViewHolder(View rootView) {
             super(rootView);
             mLayout = rootView.findViewById(R.id.email_list_layout);
             mSubject = (TextView) rootView.findViewById(R.id.email_list_subject);
-            mId = (TextView) rootView.findViewById(R.id.email_list_id_hidden);
+            //mId = (TextView) rootView.findViewById(R.id.email_list_id_hidden);
         }
     }
 }

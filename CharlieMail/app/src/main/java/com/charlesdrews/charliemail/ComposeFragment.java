@@ -7,13 +7,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -81,7 +79,7 @@ public class ComposeFragment extends Fragment {
         mDraft = (Button) rootView.findViewById(R.id.draft_button);
 
         // if draft exists, populate EditTexts with draft input
-        if (getArguments().containsKey(MainActivity.SELECTED_EMAIL_KEY)) {
+        if (getArguments() != null && getArguments().containsKey(MainActivity.SELECTED_EMAIL_KEY)) {
             Email email = getArguments().getParcelable(MainActivity.SELECTED_EMAIL_KEY);
             if (!email.getTo().isEmpty()) { mTo.setText(email.getTo()); }
             if (!email.getCc().isEmpty()) { mTo.setText(email.getCc()); }
@@ -92,7 +90,7 @@ public class ComposeFragment extends Fragment {
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkInputs()) {
+                if (checkInputsForSending()) {
                     new CreateEmailAsyncTask(mCredential).execute(SEND);
                 }
             }
@@ -101,13 +99,47 @@ public class ComposeFragment extends Fragment {
         mDraft.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new CreateEmailAsyncTask(mCredential).execute(DRAFT);
+                if (checkInputsForDraft()) {
+                    new CreateEmailAsyncTask(mCredential).execute(DRAFT);
+                }
             }
         });
         return rootView;
     }
 
-    private boolean checkInputs() {
+    private boolean checkInputsForDraft() {
+        // in order to save a message as a draft, the To and CC fields must
+        // be either blank or contain valid email addresses; invalid address will be rejected
+        String emailErrMsg = "Invalid email address";
+        String emailSeparators = ",|;";
+        EmailValidator validator = EmailValidator.getInstance();
+
+        if (!mTo.getText().toString().isEmpty()) {
+            String[] toEmails = mTo.getText().toString().split(emailSeparators);
+            for (String email : toEmails) {
+                if (!validator.isValid(email)) {
+                    mTo.setError(emailErrMsg);
+                    mTo.requestFocus();
+                    return false;
+                }
+            }
+        }
+
+        if (!mCc.getText().toString().isEmpty()) {
+            String[] ccEmails = mCc.getText().toString().split(emailSeparators);
+            for (String email : ccEmails) {
+                if (!validator.isValid(email)) {
+                    mCc.setError(emailErrMsg);
+                    mCc.requestFocus();
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private boolean checkInputsForSending() {
         String emailErrMsg = "Invalid email address";
         String blankSubjectOrBodyErrMsg = "Cannot be blank";
         String emailSeparators = ",|;";
