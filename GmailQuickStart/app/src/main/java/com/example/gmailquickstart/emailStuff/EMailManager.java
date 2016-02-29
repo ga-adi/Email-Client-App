@@ -68,7 +68,7 @@ public class EMailManager {
     public void endUpdate(){
         mLastUpdated = System.currentTimeMillis();
     }
-    private void clearEmails(){
+    public void clearEmails(){
         mEmails.clear();
     }
     public void addEmail(Email email){

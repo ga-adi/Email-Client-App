@@ -10,14 +10,52 @@ import com.example.gmailquickstart.emailStuff.EMailManager;
 import com.example.gmailquickstart.emailStuff.Email;
 import com.example.gmailquickstart.emailStuff.SendEmailThread;
 
+import java.util.ArrayList;
+
 public class ComposeActivity extends AppCompatActivity {
 
+    boolean mIsDraftOriginally=false;
     String mUser="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compose);
 
+        String theID = getIntent().getStringExtra("DRAFT");
+        if(theID!=null){
+            //this is a draft
+            mIsDraftOriginally=true;
+            //set the stuff up from the draft
+            EMailManager emailManager = EMailManager.getInstance();
+            Email mail =emailManager.getEmailByID(theID);
+            EditText toEditText = (EditText)findViewById(R.id.to_edit_text);
+            ArrayList<String>recipients =  mail.getToData();
+            String recipientsField="";
+            int total = recipients.size();
+            for(int i=0;i<recipients.size();i++){
+                if(i!=total-1) {
+                    recipientsField += recipients.get(i)+ ",";
+                }else{
+                    recipientsField += recipients.get(i);
+                }
+            }
+            toEditText.setText(recipientsField);
+
+            //subject line
+            EditText subjectEditText = (EditText)findViewById(R.id.subject_edit_text);
+            String subjectField = mail.getSubject();
+            if(subjectField!=null){
+                subjectEditText.setText(subjectField);
+            }
+
+            //body line
+            EditText bodyEditText = (EditText)findViewById(R.id.theMessageBody);
+            String bodyField = mail.getBodyData();
+            if(bodyField!=null){
+                bodyEditText.setText(bodyField);
+            }
+
+        }
         EMailManager emailManager = EMailManager.getInstance();
         mUser=emailManager.getUserEmail();
 

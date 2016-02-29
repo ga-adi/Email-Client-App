@@ -121,7 +121,7 @@ public class EmailListActivity extends AppCompatActivity {
         inboxButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                EMailManager.getInstance().clearEmails();
                 new MakeRequestTask(mCredential).execute();
             }
         });
@@ -129,6 +129,7 @@ public class EmailListActivity extends AppCompatActivity {
         draftDirButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                EMailManager.getInstance().clearEmails();
                 new MakeRequestTask(mCredential).execute("DRAFT");
             }
         });
@@ -333,23 +334,38 @@ public class EmailListActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Log.d("EmailListActivity","inside onclick listener");
                     if (mTwoPane) {
-                        Log.d("EmailListActivity","about to do detail activity fragment with id of "+holder.mItem.getTheID());
-                        Bundle arguments = new Bundle();
-                        arguments.putString(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
+                        if(holder.mItem.isDraft()){
+                            Context context = v.getContext();
+                            Intent intent = new Intent(context, ComposeActivity.class);
+                            intent.putExtra("DRAFT", holder.mItem.getTheID());
 
-                        emailDetailFragment fragment = new emailDetailFragment();
-                        fragment.setArguments(arguments);
-                        getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.email_detail_container, fragment)
-                                .commit();
+                            context.startActivity(intent);
+                        }else {
+                            Log.d("EmailListActivity", "about to do detail activity fragment with id of " + holder.mItem.getTheID());
+                            Bundle arguments = new Bundle();
+                            arguments.putString(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
+
+                            emailDetailFragment fragment = new emailDetailFragment();
+                            fragment.setArguments(arguments);
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.email_detail_container, fragment)
+                                    .commit();
+                        }
                     } else {
 
+                        if(holder.mItem.isDraft()){
+                            Context context = v.getContext();
+                            Intent intent = new Intent(context, ComposeActivity.class);
+                            intent.putExtra("DRAFT", holder.mItem.getTheID());
 
-                        Context context = v.getContext();
-                        Intent intent = new Intent(context, emailDetailActivity.class);
-                        intent.putExtra(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
+                            context.startActivity(intent);
+                        }else {
+                            Context context = v.getContext();
+                            Intent intent = new Intent(context, emailDetailActivity.class);
+                            intent.putExtra(emailDetailFragment.ARG_ITEM_ID, holder.mItem.getTheID());
 
-                        context.startActivity(intent);
+                            context.startActivity(intent);
+                        }
                     }
                 }
             });
@@ -501,6 +517,7 @@ public class EmailListActivity extends AppCompatActivity {
                 }
 
 
+
                 Email newEmail = new Email();
                 newEmail.setSnippet(actualMessage.getSnippet());
                 newEmail.setTheID(actualMessage.getId());
@@ -509,6 +526,9 @@ public class EmailListActivity extends AppCompatActivity {
                     newEmail.setBodyData(plainData);
                 }else {
                     newEmail.setBodyData(htmlData);
+                }
+                if(theSelectedLabels!=null&&theSelectedLabels.length>0&&theSelectedLabels[0].equals("DRAFT")){
+                    newEmail.setIsDraft(true);
                 }
                 newEmail.addTo(emailTo);
                 newEmail.setFromData(emailFrom);
