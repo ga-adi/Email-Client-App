@@ -1,5 +1,10 @@
 package com.boloutaredoubeni.emailapp.models;
 
+import android.databinding.BaseObservable;
+import android.databinding.Bindable;
+
+import com.boloutaredoubeni.emailapp.BR;
+import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.services.gmail.model.MessagePart;
 import com.google.api.services.gmail.model.MessagePartBody;
@@ -13,7 +18,7 @@ import java.util.List;
  *
  * A Thread of emails represented by a DoublyLinkedList
  */
-public class Email implements Serializable {
+public class Email extends BaseObservable implements Serializable {
 
   private static final long serialVersionUID = -6099312954099962806L;
 
@@ -72,19 +77,63 @@ public class Email implements Serializable {
     return new Email(id, from, date, null, null, subject, body, snippet);
   }
 
+  public static Message createMessageFrom(Email email) {
+    Message message = new Message();
+    byte[] buffer = email.mBody.getBytes();
+    String body = Base64.encodeBase64URLSafeString(buffer);
+    message.setRaw(body);
+    return message;
+  }
+
+  public static Email defaultEmail() {
+    return new Email("", "", "", null, null, "", "", null);
+  }
+
   public String getID() { return mId; }
 
-  public String getFrom() { return mFrom; }
+  @Bindable
+  public String getFrom() {
+    return mFrom;
+  }
 
-  public String getDate() { return mDate; }
+  public void setFrom(String to) {
+    mFrom = to;
+    notifyPropertyChanged(BR.from);
+  }
+
+  @Bindable
+  public String getDate() {
+    return mDate;
+  }
 
   public Email getNextEmail() { return mNextEmailInThread; }
 
   public Email getPrevEmail() { return mPreviousEmailInThread; }
 
-  public String getSubject() { return mSubject; }
+  @Bindable
+  public String getSubject() {
+    return mSubject;
+  }
 
-  public String getBody() { return mBody; }
+  public void setSubject(String subject) {
+    mSubject = subject;
+    notifyPropertyChanged(BR.subject);
+  }
 
-  public String getSnippet() { return mSnippet; }
+  @Bindable
+  public String getBody() {
+    return mBody;
+  }
+
+  public void setBody(String body) {
+    mBody = body;
+    notifyPropertyChanged(BR.body);
+  }
+
+  @Bindable
+  public String getSnippet() {
+    return mSnippet;
+  }
+
+  public boolean isValid() { return mFrom != null && !mFrom.isEmpty(); }
 }

@@ -199,6 +199,8 @@ public class InboxFragment extends Fragment {
       ArrayList<Message> messages = new ArrayList<>();
       ArrayList<Email> emails = new ArrayList<>();
 
+      // TODO: get emails with specific labels
+      // https://developers.google.com/gmail/api/v1/reference/users/messages/list
       ListMessagesResponse response = mService.users()
                                           .messages()
                                           .list(user)
@@ -207,7 +209,6 @@ public class InboxFragment extends Fragment {
       messages.addAll(response.getMessages());
 
       for (final Message message : messages) {
-        String id = message.getId();
         Message msg =
             mService.users().messages().get(user, message.getId()).execute();
 

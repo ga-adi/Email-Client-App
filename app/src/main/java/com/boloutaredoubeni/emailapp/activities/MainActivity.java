@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import com.boloutaredoubeni.emailapp.EmailApplication;
 import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.fragments.EmailDetailFragment;
 import com.boloutaredoubeni.emailapp.fragments.InboxFragment;
@@ -25,7 +26,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.services.gmail.GmailScopes;
 
 import java.util.Arrays;
 
@@ -40,8 +40,6 @@ public class MainActivity
   public static final int REQUEST_ACCOUNT_PICKER = 1000;
   public static final int REQUEST_AUTHORIZATION = 1001;
   public static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
-  private static final String PREF_ACCOUNT_NAME = "accountName";
-  private static final String[] SCOPES = {GmailScopes.GMAIL_READONLY};
 
   private GoogleAccountCredential mCredential;
 
@@ -52,11 +50,13 @@ public class MainActivity
     super.onCreate(savedInstanceState);
 
     SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
-    mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(),
-                                                      Arrays.asList(SCOPES))
-                      .setBackOff(new ExponentialBackOff())
-                      .setSelectedAccountName(
-                          settings.getString(PREF_ACCOUNT_NAME, null));
+    mCredential =
+        GoogleAccountCredential.usingOAuth2(
+                                   getApplicationContext(),
+                                   Arrays.asList(EmailApplication.getScopes()))
+            .setBackOff(new ExponentialBackOff())
+            .setSelectedAccountName(
+                settings.getString(EmailApplication.PREF_ACCOUNT_NAME, null));
 
     setContentView(R.layout.activity_main);
 
@@ -112,7 +112,7 @@ public class MainActivity
           mCredential.setSelectedAccountName(accountName);
           SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
           SharedPreferences.Editor editor = settings.edit();
-          editor.putString(PREF_ACCOUNT_NAME, accountName);
+          editor.putString(EmailApplication.PREF_ACCOUNT_NAME, accountName);
           editor.apply();
         }
       } else if (resultCode == RESULT_CANCELED) {
