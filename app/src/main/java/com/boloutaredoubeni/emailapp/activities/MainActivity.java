@@ -134,16 +134,19 @@ public class MainActivity
     // TODO: start the next fragment with the email data;
     // if the screen is dual paned show the activity side by side
 
+    Bundle args = new Bundle();
+    args.putSerializable("Email", email);
     if (isDualPaned()) {
       // TODO: make sure the recycler highlights the proper item
       FragmentManager fm = getSupportFragmentManager();
       FragmentTransaction ft = fm.beginTransaction();
       EmailDetailFragment detailFragment = new EmailDetailFragment();
+      detailFragment.setArguments(args);
       ft.replace(R.id.email_container, detailFragment);
       ft.commit();
     } else {
       Intent intent = new Intent(this, EmailDetailActivity.class);
-      intent.putExtra("Email", email);
+      intent.putExtras(args);
       startActivity(intent);
     }
   }

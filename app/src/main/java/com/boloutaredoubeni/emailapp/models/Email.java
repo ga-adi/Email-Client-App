@@ -30,6 +30,7 @@ public class Email extends BaseObservable implements Serializable {
   private String mSubject;
   private String mBody;
   private Email mPreviousEmailInThread;
+  private boolean mValid;
 
   public Email(String id, String from, String date, Email previousEmail,
                Email nextEmail, String subject, String body, String snippet) {
@@ -135,5 +136,8 @@ public class Email extends BaseObservable implements Serializable {
     return mSnippet;
   }
 
-  public boolean isValid() { return mFrom != null && !mFrom.isEmpty(); }
+  public boolean isValid() {
+    mValid = mFrom == null || !mFrom.isEmpty() ;
+    return mValid;
+  }
 }

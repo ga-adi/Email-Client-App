@@ -2,6 +2,7 @@ package com.boloutaredoubeni.emailapp.activities;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.databinding.DataBindingUtil;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.boloutaredoubeni.emailapp.EmailApplication;
+import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.databinding.ActivityComposeEmailBinding;
 import com.boloutaredoubeni.emailapp.models.Email;
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -31,6 +33,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
   private GoogleAccountCredential mCredential;
   private Email mEmail;
 
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -44,20 +47,24 @@ public class ComposeEmailActivity extends AppCompatActivity {
                 settings.getString(EmailApplication.PREF_ACCOUNT_NAME, null));
 
     mEmail = Email.defaultEmail();
-    ActivityComposeEmailBinding binding =
-        ActivityComposeEmailBinding.inflate(getLayoutInflater());
+    ActivityComposeEmailBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_compose_email);
     binding.setEmail(mEmail);
   }
 
   public void onSendEmail(View v) {
-    new SendEmailTask(mCredential).execute(mEmail);
+    if (mEmail.isValid()) {
+      new SendEmailTask(mCredential).execute();
+      return;
+    }
+    Toast.makeText(this, "Something ain't right", Toast.LENGTH_SHORT).show();
   }
+
 
   /**
    * Send a user email to the correct recipient, for now It should only support
    * starting a new email thread
    */
-  public class SendEmailTask extends AsyncTask<Email, Void, Void> {
+  public class SendEmailTask extends AsyncTask<Void, Void, Void> {
     private com.google.api.services.gmail.Gmail mService = null;
     private Exception mLastError = null;
 
@@ -72,9 +79,9 @@ public class ComposeEmailActivity extends AppCompatActivity {
     }
 
     @Override
-    protected Void doInBackground(Email... params) {
+    protected Void doInBackground(Void... params) {
       try {
-        sendEmail(params[0]);
+        sendEmail(mEmail);
       } catch (IOException e) {
         mLastError = e;
         cancel(true);

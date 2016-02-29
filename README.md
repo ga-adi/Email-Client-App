@@ -4,6 +4,10 @@
 1. Create and Send Emails
 2. Get subject, sender, thread
 
+## Bugs
+1. App crashes on rotatation
+2. App loads all emails instead of new ones
+
 ## Bonus stuff
 1. Make it pretty
 2. Save drafts in the Server
@@ -20,3 +24,4 @@
 11. Data Binding
 12. Mark read/unread
 13. Validate Email
+14. Access Contacts
