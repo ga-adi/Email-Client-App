@@ -3,6 +3,7 @@ package com.adi.ho.jackie.emailapp;
 import android.accounts.AccountManager;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +18,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -89,7 +91,9 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+
 import org.jsoup.Jsoup;
+
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -120,6 +124,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     RecyclerView emaillistRecycler;
     private MailDatabaseOpenHelper mHelper;
     private EmailRecyclerAdapter emailRecyclerAdapter;
+    private List<Email> mRecyclerViewList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,7 +137,8 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
         mEmailMessages = new ArrayList<>();
-
+        mRecyclerViewList = new ArrayList<>();
+        emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
         final FrameLayout composeFragmentContainer = (FrameLayout) findViewById(R.id.compose_fragment_container);
         final FrameLayout frameLayout = (FrameLayout) findViewById(R.id.frameLayout);
 
@@ -172,7 +178,22 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 .setBackOff(new ExponentialBackOff())
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
 
+        handleIntent(getIntent());
 
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+
+            new SearchEmailAsyncTask().execute(query);
+
+        }
     }
 
 
@@ -180,6 +201,12 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
         return true;
     }
 
@@ -197,6 +224,10 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             if (isGooglePlayServicesAvailable()) {
                 refreshResults();
             }
+        } else if (id == R.id.action_draft) {
+
+        } else if (id == R.id.action_search) {
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -366,17 +397,16 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 for (String id : idStrings) {
                     Message message = mService.users().messages().get("me", id).execute();
                     for (MessagePartHeader messagePartHeader : message.getPayload().getHeaders()) {
-                        if (messagePartHeader.getName().contains(usercred.getSelectedAccountName())) {
-                            continue;
+
+                        if (messagePartHeader.getName().equals("From")) {
+                            String sender = messagePartHeader.getValue();
+                            emailHash.put("SENDER", sender);
                         }
                         if (messagePartHeader.getName().equals("Date")) {
                             date = messagePartHeader.getValue().substring(0, 11);
                             emailHash.put("DATE", date);
                         }
-                        if (messagePartHeader.getName().equals("From")) {
-                            String sender = messagePartHeader.getValue();
-                            emailHash.put("SENDER", sender);
-                        }
+
                         if (messagePartHeader.getName().equals("Delivered-To")) {
                             emailHash.put("RECIPIENT", messagePartHeader.getValue());
                         }
@@ -484,7 +514,9 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         protected ArrayList<String> doInBackground(Void... params) {
             try {
                 ArrayList<Message> messageList = new ArrayList<>();
-                ListMessagesResponse messages = mService.users().messages().list("me").execute();
+                List<String> labelIds = new ArrayList<>();
+                labelIds.add("INBOX"); //Retrieve inbox messages only
+                ListMessagesResponse messages = mService.users().messages().list("me").setLabelIds(labelIds).execute();
 
                 for (int i = 0; i < 100; i++) {
                     messageList.add(messages.getMessages().get(i));
@@ -619,9 +651,10 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         }
     }
 
-    private class SaveDraftAsyncTask extends AsyncTask<HashMap,Void,Void>{
+    private class SaveDraftAsyncTask extends AsyncTask<HashMap, Void, Void> {
         private com.google.api.services.gmail.Gmail mService = null;
-        public SaveDraftAsyncTask(GoogleAccountCredential credential){
+
+        public SaveDraftAsyncTask(GoogleAccountCredential credential) {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             com.google.api.client.json.JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.gmail.Gmail.Builder(
@@ -637,35 +670,35 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 
         @Override
         protected Void doInBackground(HashMap... params) {
-            HashMap<String,String> draftContents = params[0];
-            String subject ="";
+            HashMap<String, String> draftContents = params[0];
+            String subject = "";
             String recipient = "";
             String body = "";
             String sender = "me";
 
             //detect whether
 
-            if (draftContents.get("SUBJECT") != null){
+            if (draftContents.get("SUBJECT") != null) {
                 subject = draftContents.get("SUBJECT");
             } else {
-                draftContents.put("SUBJECT","");
+                draftContents.put("SUBJECT", "");
             }
-            if (draftContents.get("BODY") != null){
+            if (draftContents.get("BODY") != null) {
                 body = draftContents.get("BODY");
             } else {
                 draftContents.put("BODY", "");
             }
-            if (draftContents.get("RECIPIENT") != null){
+            if (draftContents.get("RECIPIENT") != null) {
                 recipient = draftContents.get("RECIPIENT");
             } else {
                 draftContents.put("RECIPIENT", "");
             }
 
             try {
-                MimeMessage mimeMessage = createEmail(recipient,sender,subject,body);
+                MimeMessage mimeMessage = createEmail(recipient, sender, subject, body);
                 Draft draft = createDraft(mService, sender, mimeMessage);
                 String draftId = draft.getId();
-                draftContents.put("ID",draftId);
+                draftContents.put("ID", draftId);
                 mHelper.saveDraftToDb(draftContents);
 
             } catch (MessagingException e) {
@@ -677,6 +710,59 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             }
 
             return null;
+        }
+    }
+
+    private class SearchEmailAsyncTask extends AsyncTask<String, Void, List<Email>> {
+
+        private String id;
+        private String snippet;
+        private String date;
+        private String subject;
+        private String sender;
+        HashMap<String, String> searchHash;
+        List<Email> searchList;
+
+        public SearchEmailAsyncTask() {
+            searchHash = new HashMap<>();
+            searchList = new ArrayList<>();
+        }
+
+        @Override
+        protected List<Email> doInBackground(String... params) {
+            mHelper = MailDatabaseOpenHelper.getInstance(EmailItemListActivity.this);
+            String query = params[0];
+            Cursor searchCursor = mHelper.searchEmailDb(query);
+            searchCursor.moveToFirst();
+            while (!searchCursor.isAfterLast()) {
+                searchHash.clear();
+                sender = searchCursor.getString(searchCursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER));
+                date = searchCursor.getString(searchCursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE));
+                subject = searchCursor.getString(searchCursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT));
+                id = searchCursor.getString(searchCursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_ID));
+                snippet = searchCursor.getString(searchCursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SNIPPET));
+
+                searchHash.put(MailDatabaseOpenHelper.MAIL_SENDER, sender);
+                searchHash.put(MailDatabaseOpenHelper.MAIL_SUBJECT, subject);
+                searchHash.put(MailDatabaseOpenHelper.MAIL_SNIPPET, snippet);
+                searchHash.put(MailDatabaseOpenHelper.MAIL_ID, id);
+                searchHash.put(MailDatabaseOpenHelper.MAIL_DATE, date);
+
+                searchList.add(new Email(searchHash));
+
+                searchCursor.moveToNext();
+
+            }
+            searchCursor.close();
+            return searchList;
+        }
+
+        @Override
+        protected void onPostExecute(List<Email> emailList) {
+            emailList.size();
+            mEmailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this,emailList);
+            mEmailRecyclerAdapter.animateTo(emailList);
+            emaillistRecycler.scrollToPosition(0);
         }
     }
 
@@ -705,7 +791,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         return message;
     }
 
-    public static Draft createDraft(Gmail service, String userId, MimeMessage email) throws MessagingException,IOException{
+    public static Draft createDraft(Gmail service, String userId, MimeMessage email) throws MessagingException, IOException {
         Message message = createMessageWithEmail(email);
         Draft draft = new Draft();
         draft.setMessage(message);
@@ -717,21 +803,35 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     }
 
     public void setRecyclerView(List<Email> recyclerList) {
-        emaillistRecycler = (RecyclerView) findViewById(R.id.emailitem_list);
+        mRecyclerViewList = recyclerList;
+
         emaillistRecycler.setHasFixedSize(true);
         emaillistRecycler.setLayoutManager(new LinearLayoutManager(EmailItemListActivity.this));
         emaillistRecycler.addItemDecoration(new VerticalSpaceItemDecoration(20));
         emaillistRecycler.addItemDecoration(new DividerItemDecoration(EmailItemListActivity.this, R.drawable.divider));
-        emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, recyclerList, getSupportFragmentManager());
+        emailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, mRecyclerViewList);
         emaillistRecycler.setAdapter(emailRecyclerAdapter);
     }
 
-    public void saveDraft(HashMap<String,String> draftMap){
+    public void saveDraft(HashMap<String, String> draftMap) {
         new SaveDraftAsyncTask(mCredential).execute(draftMap);
     }
 
 
+    //For the case of backing in compose fragment
 
+    @Override
+    public void onBackPressed() {
+
+        int count = getSupportFragmentManager().getBackStackEntryCount();
+
+        if (count == 0) {
+            super.onBackPressed();
+
+        } else {
+            getSupportFragmentManager().popBackStack();
+        }
+    }
 
 
 }

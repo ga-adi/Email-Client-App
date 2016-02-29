@@ -35,7 +35,7 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
     public static final String DRAFT_RECIPIENT = "RECIPIENT";
     public static final String DRAFT_SUBJECT = "SUBJECT";
     public static final String DRAFT_BODY = "BODY";
-    private static final String[] DRAFT_COLUMNS = {DRAFT_ID,DRAFT_RECIPIENT,DRAFT_SUBJECT,DRAFT_BODY};
+    private static final String[] DRAFT_COLUMNS = {DRAFT_ID, DRAFT_RECIPIENT, DRAFT_SUBJECT, DRAFT_BODY};
 
 
     private Context context;
@@ -111,7 +111,7 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
 
     }
 
-    public void saveDraftToDb(HashMap<String,String> draftMap) {
+    public void saveDraftToDb(HashMap<String, String> draftMap) {
         ContentValues values = new ContentValues();
         String emailDraftId = draftMap.get("ID");
         String draftSubject = draftMap.get("SUBJECT");
@@ -126,6 +126,14 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
     }
 
     public Cursor retrieveDraftsFromDb() {
-        return mDatabase.query(DRAFT_EMAIL_TABLE, DRAFT_COLUMNS, null, null ,null, null, null);
+        return mDatabase.query(DRAFT_EMAIL_TABLE, DRAFT_COLUMNS, null, null, null, null, null);
     }
+
+    public Cursor searchEmailDb(String query) {
+        Cursor cursor = mDatabase.query(MAIL_EMAIL_TABLE, MAIL_COLUMNS, MAIL_RECIPIENT + " LIKE ? OR " +
+                        MAIL_SENDER + " LIKE ? OR " + MAIL_SUBJECT + " LIKE ? OR " + MAIL_BODY + " LIKE ? ",
+                new String[]{"%" + query + "%", "%" + query + "%", "%" + query + "%", "%" + query + "%"}, null, null, null);
+        return cursor;
+    }
+
 }

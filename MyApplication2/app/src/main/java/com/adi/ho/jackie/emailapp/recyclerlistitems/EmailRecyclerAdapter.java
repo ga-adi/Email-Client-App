@@ -27,10 +27,9 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailViewHolder> 
     private List<Email> emailList;
     private FragmentManager fragmentManager;
 
-    public EmailRecyclerAdapter(Context context, List<Email> emailList, FragmentManager fragmentManager) {
+    public EmailRecyclerAdapter(Context context, List<Email> emailList) {
         this.context = context;
         this.emailList = emailList;
-        this.fragmentManager = fragmentManager;
     }
 
     @Override
@@ -53,6 +52,58 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailViewHolder> 
     @Override
     public int getItemCount() {
         return emailList.size();
+    }
+
+    //Methods for animating removing and adding items
+    public Email removeItem(int position) {
+        final Email email = emailList.remove(position);
+        notifyItemRemoved(position);
+        return email;
+    }
+
+    public void addItem(int position, Email email) {
+        emailList.add(position, email);
+        notifyItemInserted(position);
+    }
+
+    public void moveItem(int fromPosition, int toPosition) {
+        final Email email = emailList.remove(fromPosition);
+        emailList.add(toPosition, email);
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
+    public void animateTo(List<Email> emails) {
+        applyAndAnimateRemovals(emails);
+        applyAndAnimateAdditions(emails);
+        applyAndAnimateMovedItems(emails);
+    }
+
+    private void applyAndAnimateRemovals(List<Email> emails) {
+        for (int i = emailList.size() - 1; i >= 0; i--) {
+            final Email email = emailList.get(i);
+            if (!emails.contains(email)) {
+                removeItem(i);
+            }
+        }
+    }
+
+    private void applyAndAnimateAdditions(List<Email> emails) {
+        for (int i = 0, count = emails.size(); i < count; i++) {
+            final Email email = emails.get(i);
+            if (!emailList.contains(email)) {
+                addItem(i, email);
+            }
+        }
+    }
+
+    private void applyAndAnimateMovedItems(List<Email> emails) {
+        for (int toPosition = emails.size() - 1; toPosition >= 0; toPosition--) {
+            final Email email = emails.get(toPosition);
+            final int fromPosition = emailList.indexOf(email);
+            if (fromPosition >= 0 && fromPosition != toPosition) {
+                moveItem(fromPosition, toPosition);
+            }
+        }
     }
 
 
