@@ -35,7 +35,6 @@ import android.widget.Toast;
 
 import com.adi.ho.jackie.emailapp.Fragments.ComposeFragment;
 import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
-import com.adi.ho.jackie.emailapp.dummy.DummyContent;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.DividerItemDecoration;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailRecyclerAdapter;
 import com.adi.ho.jackie.emailapp.recyclerlistitems.EmailViewHolder;
@@ -125,6 +124,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     private MailDatabaseOpenHelper mHelper;
     private EmailRecyclerAdapter emailRecyclerAdapter;
     private List<Email> mRecyclerViewList;
+    private boolean search = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,10 +224,6 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             if (isGooglePlayServicesAvailable()) {
                 refreshResults();
             }
-        } else if (id == R.id.action_draft) {
-
-        } else if (id == R.id.action_search) {
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -483,7 +479,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 } else if (mLastError instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
-                            MainActivity.REQUEST_AUTHORIZATION);
+                            EmailItemListActivity.REQUEST_AUTHORIZATION);
                 } else {
                     // mOutputText.setText("The following error occurred:\n"
 //                            + mLastError.getMessage());
@@ -600,7 +596,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 //            mCursor.close();
             if (emailList == null || emailList.size() == 0) {
                 //TODO: display message
-            } else {
+            } else if (search == false){
                 setRecyclerView(emailList);
             }
         }
@@ -759,10 +755,14 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 
         @Override
         protected void onPostExecute(List<Email> emailList) {
+            search = true;
             emailList.size();
             mEmailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this,emailList);
             mEmailRecyclerAdapter.animateTo(emailList);
             emaillistRecycler.scrollToPosition(0);
+
+            Bundle bundle = new Bundle();
+       //     bundle.putParcelableArrayList("SEARCH",emailList);
         }
     }
 

@@ -25,8 +25,9 @@
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:padding="10dp">
+        <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+
 
         <include layout="@layout/emailitem_list" />
         <FrameLayout

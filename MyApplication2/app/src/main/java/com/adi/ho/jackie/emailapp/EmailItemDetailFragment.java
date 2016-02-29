@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.adi.ho.jackie.emailapp.database.MailDatabaseOpenHelper;
-import com.adi.ho.jackie.emailapp.dummy.DummyContent;
 
 import org.w3c.dom.Text;
 
