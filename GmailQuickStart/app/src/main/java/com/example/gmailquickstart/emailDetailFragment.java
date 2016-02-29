@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.gmailquickstart.emailStuff.EMailManager;
@@ -96,17 +97,36 @@ public class emailDetailFragment extends Fragment {
         if (mEmail != null) {
             Log.d("emailDetailFragment", "email is not null, aboout to call webview");
            // ((WebView) rootView.findViewById(R.id.web_view)).loadData(mEmail.getBodyData(), "text/html", null);
-            WebView webView = (WebView)rootView.findViewById((R.id.web_view));
-            webView.loadData(mEmail.getBodyData(), "text/html", null);
-            if(webView==null){
-                Log.d("emailDetailFragment","webview is null");
+
+            if(mEmail.getType().equals("html")) {
+                Log.d("EmailDetailFragment","emailDetailFragment is html");
+                WebView webView = (WebView) rootView.findViewById((R.id.web_view));
+                webView.setVisibility(View.VISIBLE);
+                TextView textView = (TextView)rootView.findViewById(R.id.email_TextView);
+                textView.setVisibility(View.GONE);
+                webView.loadData(mEmail.getBodyData(), "text/html", null);
+                if (webView == null) {
+                    Log.d("emailDetailFragment", "webview is null");
+                }
+            }else{
+                WebView webView = (WebView) rootView.findViewById((R.id.web_view));
+                webView.setVisibility(View.GONE);
+                Log.d("EmailDetailFragment", "emailDetailFragment is text");
+                Log.d("EmailDetailFragment","Body data "+mEmail.getBodyData());
+                TextView textView = (TextView)rootView.findViewById(R.id.email_TextView);
+                textView.setVisibility(View.VISIBLE);
+                textView.setText(mEmail.getBodyData());
+                int red = (int)(Math.random()*255)+1;
+                int blue = (int)(Math.random()*255)+1;
+                int green = (int)(Math.random()*255)+1;
+                textView.setBackgroundColor(Color.rgb(red,blue,green));
             }
-            //TextView backUpTextView  =(TextView) rootView.findViewById(R.id.backup_textView);
-            int red = (int)(Math.random()*255)+1;
-            int blue = (int)(Math.random()*255)+1;
-            int green = (int)(Math.random()*255)+1;
-            //rootView.setBackgroundColor(Color.rgb(red, blue, green));
-            webView.setBackgroundColor(Color.rgb(red, blue, green));
+//            //TextView backUpTextView  =(TextView) rootView.findViewById(R.id.backup_textView);
+//            int red = (int)(Math.random()*255)+1;
+//            int blue = (int)(Math.random()*255)+1;
+//            int green = (int)(Math.random()*255)+1;
+//            //rootView.setBackgroundColor(Color.rgb(red, blue, green));
+//            webView.setBackgroundColor(Color.rgb(red, blue, green));
         }
 
         return rootView;

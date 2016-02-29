@@ -13,6 +13,16 @@ public class Email {
     private ArrayList<String> mToData;
     private String mFromData;
 
+    public String getType() {
+        return mType;
+    }
+
+    public void setType(String type) {
+        mType = type;
+    }
+
+    private String mType;
+
     public boolean isDraft() {
         return mIsDraft;
     }

@@ -183,8 +183,15 @@ public class EmailListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d("EmailListActivity","onResume about to see if I should refresh");
         if (isGooglePlayServicesAvailable()) {
-            refreshResults();
+            if(EmailListActivity.this.isRequestedViaSearch==false) {
+                Log.d("EmailListActivity","onResume about to see if I should refresh--ABOUT CO CALL REFERSH RESULTS");
+                refreshResults();
+            }else{
+                Log.d("EmailListActivity","onResume about to see if I should refresh --setting search variable to false");
+                EmailListActivity.this.isRequestedViaSearch=false;
+            }
         } else {
             Toast.makeText(EmailListActivity.this,"Google Play Services required:  after installing, close and relaunch this app.",Toast.LENGTH_LONG).show();
         }
@@ -496,7 +503,7 @@ public class EmailListActivity extends AppCompatActivity {
             ArrayList<String> theLabels = new ArrayList<>();
             if(theSelectedLabels==null ||theSelectedLabels.length==0) {
                 theLabels.add("INBOX");
-                theLabels.add("CATEGORY_PERSONAL");
+                //theLabels.add("CATEGORY_PERSONAL");
 
             }else{
                 for(int i=0;i<theSelectedLabels.length;i++){
@@ -504,12 +511,14 @@ public class EmailListActivity extends AppCompatActivity {
                     Log.d("EmailListActivity "," adding label "+theSelectedLabels[i]);
                 }
             }
-
+//            theLabels.clear();
+//            theLabels.add("INBOX");
+            //theLabels.add("CATEGORY_PERSONAL");
             //ListMessagesResponse response =mService.users().messages().list(user).execute();
             ListMessagesResponse response=null;
             if(EmailListActivity.this.isRequestedViaSearch) {
                 response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).setQ(EmailListActivity.this.searchString).execute();
-                EmailListActivity.this.isRequestedViaSearch=false;
+                //EmailListActivity.this.isRequestedViaSearch=false;
             }else {
                 response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).execute();
             }
@@ -565,6 +574,7 @@ public class EmailListActivity extends AppCompatActivity {
 
                     }
                 }else{
+
                         plainData = new String(Base64.decodeBase64(actualMessage.getPayload().getBody().getData()));
                 }
 
@@ -574,10 +584,16 @@ public class EmailListActivity extends AppCompatActivity {
                 newEmail.setSnippet(actualMessage.getSnippet());
                 newEmail.setTheID(actualMessage.getId());
                 newEmail.setSubject(emailSubject);
+                Log.d("EmailListActivity","htmlData:"+htmlData);
+                Log.d("EmailListActivity","plainData "+plainData);
                 if(htmlData.equals("")){
+                    Log.d("EmailListActivity","using plain text");
                     newEmail.setBodyData(plainData);
+                    newEmail.setType("text");
                 }else {
+                    Log.d("EmailListActivity","using html text");
                     newEmail.setBodyData(htmlData);
+                    newEmail.setType("html");
                 }
                 if(theSelectedLabels!=null&&theSelectedLabels.length>0&&theSelectedLabels[0].equals("DRAFT")){
                     newEmail.setIsDraft(true);
