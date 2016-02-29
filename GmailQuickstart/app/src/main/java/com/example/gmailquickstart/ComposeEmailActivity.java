@@ -120,6 +120,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
             return null;
         }
 
+        //upon completion, user is redirected to the MainActivity and given confirmation of successful delivery
         @Override
         protected void onPostExecute(Void param) {
             Toast.makeText(ComposeEmailActivity.this, "Email Sent!", Toast.LENGTH_SHORT).show();
@@ -142,7 +143,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
             mBody.setText(body);}
     }
 
-    //Method to take user inputs and create a MimeMessage Object
+    //Method to take user inputs and create a MimeMessage Object and populate it with the user's inputs
     public static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
@@ -159,7 +160,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
         return email;
     }
 
-    //Method to encode the MimeMessage object into a Gmail object
+    //Method to encode the MimeMessage object into a Gmail object for delivery via network call
     public static Message createMessageWithEmail(MimeMessage email) throws MessagingException, IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         email.writeTo(bytes);
@@ -169,7 +170,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
         return message;
     }
 
-    //Method to take the newly constructed Gmail object and send via gmail
+    //Method to take the newly constructed Gmail object and send via gmail servers
     public static void sendMessage(Gmail service, String userId, MimeMessage email) throws MessagingException, IOException {
         Message message = createMessageWithEmail(email);
         Message result = service.users().messages().send(userId, message).execute();

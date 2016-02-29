@@ -24,6 +24,7 @@ public class EmailList {
         return mEmailArrayList;
     }
 
+    //Arraylist cycles through email labels to construct an inbox ONLY list
     public ArrayList<Email> getInbox(){
         ArrayList<Email> inbox = new ArrayList<>();
         for (Email email:mEmailArrayList) {
@@ -37,7 +38,7 @@ public class EmailList {
         }
         return inbox;
     }
-
+    //Arraylist cycles through email labels to construct a sentEmails ONLY list
     public ArrayList<Email> getSentMail(){
         ArrayList<Email> sentMail = new ArrayList<>();
         for (Email email:mEmailArrayList) {

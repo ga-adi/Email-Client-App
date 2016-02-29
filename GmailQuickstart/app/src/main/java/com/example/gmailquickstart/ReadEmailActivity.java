@@ -62,7 +62,7 @@ public class ReadEmailActivity extends AppCompatActivity {
         RetrieveEmailTask retrieveEmailTask = new RetrieveEmailTask();
         retrieveEmailTask.execute(getIntent().getStringExtra(EmailAdapter.EMAIL_ID));
 
-        //FAB launches ComposeEmailActivity to respond to email under review
+        //FAB launches ComposeEmailActivity to respond to email under review and passes relevent response info
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -88,6 +88,10 @@ public class ReadEmailActivity extends AppCompatActivity {
         protected Email doInBackground(String... ID) {
             mEmailID = ID[0];
             int locationInEmailArray = 0;
+
+            //iterator cycles through EmailList array to see if all data for specific email has
+            // already been downloaded.  If yes, the network call below is bypassed and the email
+            // data is pulled from the arraylist to speed up runtime
             for (Email email : EmailList.getInstance().getAllEmails()) {
                 if(email.getmEmailID().equals(mEmailID)){
                     mEmail = email;
@@ -95,7 +99,10 @@ public class ReadEmailActivity extends AppCompatActivity {
                 }
             }
 
+            //If data is missing from the Email object in the arraylist, the app makes a network
+            // call to pull the relevent email data from Gmail's servers
             if(mEmail.getmPayloadPartsBodyData() == null) {
+
                 //Setup up Gmail account connection
                 mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(), Arrays.asList(MainActivity.SCOPES)).setBackOff(new ExponentialBackOff()).setSelectedAccountName(mSettings.getString(MainActivity.PREF_ACCOUNT_NAME, null));
                 HttpTransport transport = AndroidHttp.newCompatibleTransport();
@@ -142,6 +149,7 @@ public class ReadEmailActivity extends AppCompatActivity {
             return mEmail;
         }
 
+        //onPostExecute populates all onScreen views with the specific email data
         @Override
         protected void onPostExecute(Email email) {
             mTo.setText(email.getmPayloadHeadersTo());

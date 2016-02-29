@@ -22,6 +22,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,6 +35,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
@@ -84,7 +86,8 @@ public class MainActivity extends AppCompatActivity {
         mActionbar.setDisplayHomeAsUpEnabled(true);
         mActionbar.setHomeButtonEnabled(true);
 
-        // Initialize credentials and service object
+        // Initialize credentials and service object (ActionBar title updated to reflect
+        // the email account currently listed)
         settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
@@ -143,11 +146,8 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**
-     * Attempt to get a set of data from the Gmail API to display. If the
-     * email address isn't known yet, then call chooseAccount() method so the
-     * user can pick an account.
-     */
+    //Method to retrieve data from the Gmail servers... If no account has been selected yet,
+    // chooseAccount() method is called so the user can pick an account.
     private void refreshResults() {
         if (mCredential.getSelectedAccountName() == null) {chooseAccount();}
         else {
@@ -163,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
     }
 
+    //Check to confirm network connectivity
     private boolean isDeviceOnline() {
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -189,12 +190,12 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    //An asynchronous task to handle Gmail API call
+    //An asynchronous task to handle Gmail API call to pull all emails into RecyclerView
     private class MakeRequestTask extends AsyncTask<Void, Void, ArrayList<Email>> {
         private com.google.api.services.gmail.Gmail mService = null;
         private Exception mLastError = null;
 
-        //constructor
+        //Async constructor takes google account credentials to instantiate a Gmail object
         public MakeRequestTask(GoogleAccountCredential credential) {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -202,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                     .setApplicationName("Gmail API Android Quickstart").build();
         }
 
-        //Background task to call Gmail API
+        //Background task to call Gmail API and pull all data in worker thread
         @Override
         protected ArrayList<Email> doInBackground(Void... params) {
             try {return getDataFromApi();}
@@ -215,7 +216,8 @@ public class MainActivity extends AppCompatActivity {
 
         //Fetch a list of Gmail message data attached to the specified account
         private ArrayList<Email> getDataFromApi() throws IOException {
-            //Pull full list of emails
+
+            //Pull full list of emails from Gmail servers
             ListMessagesResponse list = mService.users().messages().list("me").execute();
             List<Message> messages = list.getMessages();
 
@@ -226,7 +228,9 @@ public class MainActivity extends AppCompatActivity {
                 Message message = messages.get(i);
                 Message actual = mService.users().messages().get("me", message.getId()).execute();
 
-                //Confirm if Message is already accounted for in EmailList Singleton
+                //Confirm if each Message is already accounted for in EmailList Singleton. If it is,
+                // the data is pulled directly from the arraylist instead of the network to speed
+                // up runtime of populating the email list
                 Boolean isNew = true;
                 for (Email z:EmailList.getInstance().getAllEmails()) {
                     if(z.getmEmailID().equals(actual.getId())){
@@ -234,13 +238,17 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if(isNew){
-                    //create new email object to represent the message in the app and show the subject/snippet in the RecyclerView
+                    //create new email object to represent the message in the app and show the
+                    // subject/snippet in the RecyclerView.  Only ID/Snippet/LabelIDs/Subject are
+                    // pulled in this activity's network call to reduce the amount of data needed
+                    // to load the page (secondary network call made to populate remaining data
+                    // points in the ReadEmailActivity)
                     Email email = new Email();
                     email.setmEmailID(actual.getId());
                     email.setmSnippet(actual.getSnippet());
                     email.setmLabelIDs(actual.getLabelIds().toArray(email.getmLabelIDs()));
 
-                    //test to confirm JSON location indices for desired Email Header properties
+                    //test to confirm JSON location indices for the "subject" Email Header property
                     for (int x = 0; x < actual.getPayload().getHeaders().size(); x++) {
                         if(actual.getPayload().getHeaders().get(x).getName().equals("Subject")){
                             email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
@@ -252,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
             return EmailList.getInstance().getInbox();
         }
 
+        //update the email list once all data is confirmed
         @Override
         protected void onPostExecute(ArrayList<Email> output) {
             mEmailAdapter.notifyDataSetChanged();
@@ -277,15 +286,53 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuinflater = getMenuInflater();
         menuinflater.inflate(R.menu.options_menu,menu);
+
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.xmlActionBarSearch).getActionView();
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setQueryHint("Type Keyword");
+        searchView.setIconifiedByDefault(false);
+        searchView.setSubmitButtonEnabled(true);
+
+        //Code to update search results dynamically as the User types
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (TextUtils.isEmpty(newText)) {
+                    EmailList.getInstance().getInbox();
+                    mEmailAdapter.notifyDataSetChanged();
+                } else {
+                    ArrayList<Email> newList = new ArrayList<>();
+                    for (Email email:EmailList.getInstance().getInbox()) {
+                        if(email.getmPayloadHeadersSubject().contains(newText)){
+                            newList.add(email);
+                        }
+                    }
+                    EmailList.getInstance().clear();
+                    EmailList.getInstance().getAllEmails().addAll(newList);
+                    mEmailAdapter.notifyDataSetChanged();
+                }
+                return true;
+            }
+        });
+
+
+
         return super.onCreateOptionsMenu(menu);
     }
 
-    //Options menu click prompts user to change accounts
+    //Options menu click prompts user to change email accounts
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id){
             case R.id.action_changeAccount:
+                //If account is changed, the arraylist is cleared prior to populating it with the new email objects
                 chooseAccount();
                 EmailList.getInstance().getAllEmails().clear();
                 mEmailAdapter.notifyDataSetChanged();

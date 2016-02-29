@@ -1,6 +1,5 @@
 package com.example.gmailquickstart;
 
-
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -46,6 +45,7 @@ public class EmailAdapter extends RecyclerView.Adapter<EmailAdapter.ViewHolder> 
         return new ViewHolder(v);
     }
 
+    //RecyclerView ViewHolder implements onClickListener in order to respond to list item clicks
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public TextView emailSnippet;
         public TextView emailSubject;
