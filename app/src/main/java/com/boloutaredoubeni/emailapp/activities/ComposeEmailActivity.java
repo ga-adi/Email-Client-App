@@ -13,6 +13,7 @@ import com.boloutaredoubeni.emailapp.EmailApplication;
 import com.boloutaredoubeni.emailapp.R;
 import com.boloutaredoubeni.emailapp.databinding.ActivityComposeEmailBinding;
 import com.boloutaredoubeni.emailapp.models.Email;
+import com.boloutaredoubeni.emailapp.viewmodels.EmailViewModel;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.HttpTransport;
@@ -31,8 +32,7 @@ import java.util.Arrays;
 public class ComposeEmailActivity extends AppCompatActivity {
 
   private GoogleAccountCredential mCredential;
-  private Email mEmail;
-
+  private EmailViewModel mViewModel;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -46,25 +46,29 @@ public class ComposeEmailActivity extends AppCompatActivity {
             .setSelectedAccountName(
                 settings.getString(EmailApplication.PREF_ACCOUNT_NAME, null));
 
-    mEmail = Email.defaultEmail();
-    ActivityComposeEmailBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_compose_email);
-    binding.setEmail(mEmail);
+    ActivityComposeEmailBinding binding =
+        DataBindingUtil.setContentView(this, R.layout.activity_compose_email);
+    mViewModel = new EmailViewModel();
+    binding.setVm(mViewModel);
+    binding.emailEdit.addTextChangedListener(mViewModel.toFieldWatcher);
+    binding.subjectEdit.addTextChangedListener(mViewModel.subjectWatcher);
+    binding.bodyEdit.addTextChangedListener(mViewModel.bodyWatcher);
   }
 
   public void onSendEmail(View v) {
-    if (mEmail.isValid()) {
-      new SendEmailTask(mCredential).execute();
+    Email email = mViewModel.emitEmail();
+    if (email.isValid()) {
+      new SendEmailTask(mCredential).execute(email);
       return;
     }
     Toast.makeText(this, "Something ain't right", Toast.LENGTH_SHORT).show();
   }
 
-
   /**
    * Send a user email to the correct recipient, for now It should only support
    * starting a new email thread
    */
-  public class SendEmailTask extends AsyncTask<Void, Void, Void> {
+  public class SendEmailTask extends AsyncTask<Email, Void, Void> {
     private com.google.api.services.gmail.Gmail mService = null;
     private Exception mLastError = null;
 
@@ -79,12 +83,13 @@ public class ComposeEmailActivity extends AppCompatActivity {
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Void doInBackground(Email... params) {
       try {
-        sendEmail(mEmail);
+        sendEmail(params[0]);
       } catch (IOException e) {
         mLastError = e;
         cancel(true);
+        mLastError.printStackTrace();
       } finally {
         return null;
       }
@@ -106,7 +111,7 @@ public class ComposeEmailActivity extends AppCompatActivity {
     private void sendEmail(Email email) throws IOException {
       String user = "me";
       Message message = Email.createMessageFrom(email);
-      mService.users().messages().send(user, message).execute();
+      message = mService.users().messages().send(user, message).execute();
     }
   }
 }

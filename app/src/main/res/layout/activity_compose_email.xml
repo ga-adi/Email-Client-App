@@ -2,12 +2,9 @@
 <layout>
     <data>
         <variable
-            name="email"
-            type="com.boloutaredoubeni.emailapp.models.Email"/>
-        <variable
-            name="activity"
-            type="com.boloutaredoubeni.emailapp.activities.ComposeEmailActivity"/>
-    </data>
+            name="vm"
+            type="com.boloutaredoubeni.emailapp.viewmodels.EmailViewModel"/>
+       </data>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -19,39 +16,38 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@+id/editText"
-        android:layout_toStartOf="@+id/editText"/>
+        android:layout_toLeftOf="@+id/email_edit"
+        android:layout_toStartOf="@+id/email_edit"/>
     <EditText
         android:hint="Enter an email address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/editText"
-        android:text="@{email.from}"
+        android:id="@+id/email_edit"
+        android:text="@{vm.to}"
         android:inputType="textEmailAddress"
-
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/textView"
-        android:layout_alignRight="@+id/editText2"
-        android:layout_alignEnd="@+id/editText2"/>
+        android:layout_alignRight="@+id/subject_edit"
+        android:layout_alignEnd="@+id/subject_edit"/>
     <TextView
         android:text="Subject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView"
-        android:layout_alignTop="@+id/editText2"
+        android:layout_alignTop="@+id/subject_edit"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"/>
     <EditText
         android:hint="A Subject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@{email.subject}"
-        android:id="@+id/editText2"
+        android:text="@{vm.subject}"
+        android:id="@+id/subject_edit"
         android:inputType="textEmailSubject"
-        android:layout_below="@+id/editText"
+        android:layout_below="@+id/email_edit"
         android:layout_toRightOf="@+id/textView"
-        android:layout_alignRight="@+id/editText3"
-        android:layout_alignEnd="@+id/editText3"/>
+        android:layout_alignRight="@+id/body_edit"
+        android:layout_alignEnd="@+id/body_edit"/>
     <EditText
         android:hint="Say something"
         android:layout_width="match_parent"
@@ -59,17 +55,17 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true"
-        android:text="@{email.body}"
-        android:id="@+id/editText3"
-        android:layout_below="@+id/editText2"/>
+        android:text="@{vm.body}"
+        android:id="@+id/body_edit"
+        android:layout_below="@+id/subject_edit"/>
     <Button
         android:id="@+id/send_btn"
         android:text="send"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/editText3"
-        android:layout_alignRight="@+id/editText3"
-        android:layout_alignEnd="@+id/editText3"
+        android:layout_alignBottom="@+id/body_edit"
+        android:layout_alignRight="@+id/body_edit"
+        android:layout_alignEnd="@+id/body_edit"
         android:onClick="onSendEmail"/>
 </RelativeLayout>
 </layout>
