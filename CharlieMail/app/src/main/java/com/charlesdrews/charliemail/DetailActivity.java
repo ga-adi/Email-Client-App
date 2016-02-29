@@ -3,7 +3,6 @@ package com.charlesdrews.charliemail;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -22,20 +21,37 @@ public class DetailActivity extends AppCompatActivity {
         // Check if sent here by MainActivity in order to compose an email
         boolean compose = getIntent().getExtras().getBoolean(MainActivity.COMPOSE_INDICATOR_KEY);
         if (compose) {
-            ComposeFragment composeFragment = new ComposeFragment();
-            if (savedInstanceState == null) {
-                getSupportFragmentManager().beginTransaction()
-                        .add(R.id.detail_fragment_container, composeFragment)
-                        .commit();
-            } else {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.detail_fragment_container, composeFragment)
-                        .commit();
-            }
-            return;
+            handleComposeFragment(savedInstanceState);
+        } else {
+            // If not here to compose, then here to view an email
+            handleDetailFragment(savedInstanceState);
         }
 
-        // If not here to compose, then here to view an email
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(DetailActivity.this, DetailActivity.class);
+                intent.putExtra(MainActivity.COMPOSE_INDICATOR_KEY, true);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void handleComposeFragment(Bundle savedInstanceState) {
+        ComposeFragment composeFragment = new ComposeFragment();
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.detail_fragment_container, composeFragment)
+                    .commit();
+        } else {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.detail_fragment_container, composeFragment)
+                    .commit();
+        }
+    }
+
+    private void handleDetailFragment(Bundle savedInstanceState) {
         Email email = null;
         if (getIntent().getExtras() != null) {
             email = getIntent().getParcelableExtra(MainActivity.SELECTED_EMAIL_KEY);
@@ -60,15 +76,5 @@ public class DetailActivity extends AppCompatActivity {
                         .commit();
             }
         }
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(DetailActivity.this, MainActivity.class);
-                intent.putExtra(MainActivity.COMPOSE_INDICATOR_KEY, true);
-                startActivity(intent);
-            }
-        });
     }
 }
