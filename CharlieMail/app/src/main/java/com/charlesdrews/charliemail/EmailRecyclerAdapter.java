@@ -15,10 +15,12 @@ import java.util.ArrayList;
  * Created by charlie on 2/25/16.
  */
 public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdapter.ViewHolder> {
+    private String mLabel;
     private ArrayList<Email> mEmails;
     private Context mContext;
 
-    public EmailRecyclerAdapter(ArrayList<Email> emails) {
+    public EmailRecyclerAdapter(String label, ArrayList<Email> emails) {
+        mLabel = label;
         mEmails = emails;
     }
 
@@ -45,7 +47,7 @@ public class EmailRecyclerAdapter extends RecyclerView.Adapter<EmailRecyclerAdap
             holder.mLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ((MainActivity) v.getContext()).onEmailSelected(email);
+                    ((MainActivity) v.getContext()).onEmailSelected(mLabel, email);
                 }
             });
         } catch (ClassCastException e) {

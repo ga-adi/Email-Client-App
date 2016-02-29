@@ -62,7 +62,7 @@ public class EmailListFragment extends Fragment {
             mLabels.add(ListsPagerAdapter.GMAIL_LABELS[selectedTab]);
 
             mEmails = new ArrayList<>();
-            mAdapter = new EmailRecyclerAdapter(mEmails);
+            mAdapter = new EmailRecyclerAdapter(ListsPagerAdapter.GMAIL_LABELS[selectedTab], mEmails);
         }
     }
 

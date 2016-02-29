@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -95,19 +96,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void onEmailSelected(Email email) {
+    public void onEmailSelected(String label, Email email) {
         Bundle bundle = new Bundle();
         bundle.putParcelable(SELECTED_EMAIL_KEY, email);
 
         if (mTwoPanes) {
-            DetailFragment detailFragment = new DetailFragment();
-            detailFragment.setArguments(bundle);
+            Fragment fragment;
+            if (label.equals(ListsPagerAdapter.GMAIL_LABELS[1])) { //DRAFT
+                fragment = new ComposeFragment();
+            } else {
+                fragment = new DetailFragment();
+            }
+            fragment.setArguments(bundle);
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.detail_fragment_container, detailFragment)
+                    .replace(R.id.detail_fragment_container, fragment)
                     .commit();
         } else {
             Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-            bundle.putBoolean(COMPOSE_INDICATOR_KEY, false);
+            if (label.equals(ListsPagerAdapter.GMAIL_LABELS[1])) { //DRAFT
+                bundle.putBoolean(COMPOSE_INDICATOR_KEY, true);
+            } else {
+                bundle.putBoolean(COMPOSE_INDICATOR_KEY, false);
+            }
             intent.putExtras(bundle);
             startActivity(intent);
         }

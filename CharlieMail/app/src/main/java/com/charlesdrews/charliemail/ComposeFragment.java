@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +48,6 @@ public class ComposeFragment extends Fragment {
     private static final String DRAFT = "draft";
 
     private GoogleAccountCredential mCredential;
-    private TextView mFrom;
     private EditText mTo, mCc, mSubject, mBody;
     private Button mSend, mDraft;
 
@@ -79,6 +79,15 @@ public class ComposeFragment extends Fragment {
         mBody = (EditText) rootView.findViewById(R.id.compose_body);
         mSend = (Button) rootView.findViewById(R.id.send_button);
         mDraft = (Button) rootView.findViewById(R.id.draft_button);
+
+        // if draft exists, populate EditTexts with draft input
+        if (getArguments().containsKey(MainActivity.SELECTED_EMAIL_KEY)) {
+            Email email = getArguments().getParcelable(MainActivity.SELECTED_EMAIL_KEY);
+            if (!email.getTo().isEmpty()) { mTo.setText(email.getTo()); }
+            if (!email.getCc().isEmpty()) { mTo.setText(email.getCc()); }
+            if (!email.getSubject().isEmpty()) { mSubject.setText(email.getSubject()); }
+            if (!email.getBody().isEmpty()) { mBody.setText(email.getBody()); }
+        }
 
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,10 +193,8 @@ public class ComposeFragment extends Fragment {
                         return draft.getId() != null; // null if not successful
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                //TODO - remove this toast
-                Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 mLastError = e;
+                e.printStackTrace();
                 return false;
             }
             return false;
