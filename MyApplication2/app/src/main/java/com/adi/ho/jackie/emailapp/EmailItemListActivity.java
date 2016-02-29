@@ -109,7 +109,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     EmailRecyclerAdapter mEmailRecyclerAdapter;
     private List<String> mEmailIdsList;
     private ArrayList<Message> mEmailMessages;
-
+    SearchView searchView;
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
@@ -124,7 +124,6 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
     private MailDatabaseOpenHelper mHelper;
     private EmailRecyclerAdapter emailRecyclerAdapter;
     private List<Email> mRecyclerViewList;
-    private boolean search = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -178,23 +177,21 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 .setBackOff(new ExponentialBackOff())
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
 
-        handleIntent(getIntent());
+        //handleIntent(getIntent());
 
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        handleIntent(intent);
-    }
-
-    private void handleIntent(Intent intent) {
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-
-            new SearchEmailAsyncTask().execute(query);
-
-        }
-    }
+//    @Override
+//    protected void onNewIntent(Intent intent) {
+//        handleIntent(intent);
+//    }
+//
+//    private void handleIntent(Intent intent) {
+//        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+//           // String query = intent.getStringExtra(SearchManager.QUERY);
+//
+//        }
+//    }
 
 
     @Override
@@ -202,11 +199,10 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-
+        //SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        //  searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setOnQueryTextListener(queryListener);
         return true;
     }
 
@@ -224,10 +220,38 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             if (isGooglePlayServicesAvailable()) {
                 refreshResults();
             }
+        } else if (id == R.id.action_logout) {
+
+            int size = mRecyclerViewList.size();
+            mRecyclerViewList.clear();
+            onRestart();
+            chooseAccount();
+            mHelper.clearDb();
+        } else if (id == R.id.action_search) {
+
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+
+    SearchView.OnQueryTextListener queryListener = new SearchView.OnQueryTextListener() {
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            if (query.trim().isEmpty() || query == null){
+                new LoadEmailsFromDbAsyncTask().execute();
+            } else {
+                new SearchEmailAsyncTask().execute(query);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onQueryTextChange(String newText) {
+            return false;
+        }
+    };
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -596,7 +620,7 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
 //            mCursor.close();
             if (emailList == null || emailList.size() == 0) {
                 //TODO: display message
-            } else if (search == false){
+            } else {
                 setRecyclerView(emailList);
             }
         }
@@ -719,9 +743,14 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         HashMap<String, String> searchHash;
         List<Email> searchList;
 
+        HashMap<String, String> emailHashFromDb;
+        List<Email> emailListFromDb;
+
         public SearchEmailAsyncTask() {
             searchHash = new HashMap<>();
             searchList = new ArrayList<>();
+            emailHashFromDb = new HashMap<>();
+            emailListFromDb = new ArrayList<>();
         }
 
         @Override
@@ -749,20 +778,33 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 searchCursor.moveToNext();
 
             }
+
+            Cursor cursor = mHelper.getAllEmailsFromDb();
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                emailHashFromDb.clear();
+                emailHashFromDb.put("SENDER", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SENDER)));
+                emailHashFromDb.put("DATE", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DATE)));
+                emailHashFromDb.put("SUBJECT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SUBJECT)));
+                emailHashFromDb.put("ID", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_ID)));
+                emailHashFromDb.put("SNIPPET", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_SNIPPET)));
+                emailHashFromDb.put("DRAFT", cursor.getString(cursor.getColumnIndex(MailDatabaseOpenHelper.MAIL_DRAFT)));
+                emailListFromDb.add(new Email(emailHashFromDb));
+                cursor.moveToNext();
+            }
             searchCursor.close();
+            cursor.close();
+            mRecyclerViewList = emailListFromDb;
             return searchList;
         }
 
         @Override
         protected void onPostExecute(List<Email> emailList) {
-            search = true;
-            emailList.size();
-            mEmailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this,emailList);
+            mEmailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, mRecyclerViewList);
+            emaillistRecycler.setAdapter(mEmailRecyclerAdapter);
             mEmailRecyclerAdapter.animateTo(emailList);
             emaillistRecycler.scrollToPosition(0);
 
-            Bundle bundle = new Bundle();
-       //     bundle.putParcelableArrayList("SEARCH",emailList);
         }
     }
 

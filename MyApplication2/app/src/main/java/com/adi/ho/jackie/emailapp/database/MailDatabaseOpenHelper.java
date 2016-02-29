@@ -135,5 +135,8 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
                 new String[]{"%" + query + "%", "%" + query + "%", "%" + query + "%", "%" + query + "%"}, null, null, null);
         return cursor;
     }
+    public void clearDb(){
+        mDatabase.execSQL("DROP TABLE " +MAIL_EMAIL_TABLE);
+    }
 
 }
