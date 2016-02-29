@@ -136,7 +136,8 @@ public class MailDatabaseOpenHelper extends SQLiteOpenHelper {
         return cursor;
     }
     public void clearDb(){
-        mDatabase.execSQL("DROP TABLE " +MAIL_EMAIL_TABLE);
+//        mDatabase.execSQL("DROP TABLE IF EXIST " +MAIL_EMAIL_TABLE);
+        mDatabase.delete(MAIL_EMAIL_TABLE,null,null);
     }
 
 }

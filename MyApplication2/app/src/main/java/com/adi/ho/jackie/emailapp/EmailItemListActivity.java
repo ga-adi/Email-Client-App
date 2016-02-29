@@ -146,17 +146,10 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                FragmentManager fragmentManager = getSupportFragmentManager();
-//                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//                fragmentTransaction.replace(R.id.compose_fragment_container, new ComposeFragment());
-//                fragmentTransaction.addToBackStack(null);
-//                composeFragmentContainer.setVisibility(View.VISIBLE);
                 ComposeFragment composeFragment = new ComposeFragment();
                 // fragmentTransaction.commit();
                 android.app.FragmentManager fm = getFragmentManager();
                 composeFragment.show(fm, "Compose");
-
-
             }
         });
 
@@ -177,31 +170,15 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
                 .setBackOff(new ExponentialBackOff())
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
 
-        //handleIntent(getIntent());
 
     }
-
-//    @Override
-//    protected void onNewIntent(Intent intent) {
-//        handleIntent(intent);
-//    }
-//
-//    private void handleIntent(Intent intent) {
-//        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-//           // String query = intent.getStringExtra(SearchManager.QUERY);
-//
-//        }
-//    }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        //SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
         searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-        //  searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setOnQueryTextListener(queryListener);
         return true;
     }
@@ -222,12 +199,16 @@ public class EmailItemListActivity extends AppCompatActivity implements ComposeF
             }
         } else if (id == R.id.action_logout) {
 
-            int size = mRecyclerViewList.size();
-            mRecyclerViewList.clear();
-            onRestart();
+            List<Email> emptyList = new ArrayList<>();
+            mEmailRecyclerAdapter = new EmailRecyclerAdapter(EmailItemListActivity.this, mRecyclerViewList);
+            emaillistRecycler.setAdapter(emailRecyclerAdapter);
+            mEmailRecyclerAdapter.animateTo(emptyList);
             chooseAccount();
             mHelper.clearDb();
-        } else if (id == R.id.action_search) {
+            if (isGooglePlayServicesAvailable()) {
+                refreshResults();
+            }
+    } else if (id == R.id.action_search) {
 
         }
 

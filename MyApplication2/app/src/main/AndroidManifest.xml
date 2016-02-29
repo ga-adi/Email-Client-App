@@ -20,7 +20,7 @@
             android:name=".EmailItemListActivity"
             android:label="@string/title_emailitem_list"
             android:theme="@style/AppTheme.NoActionBar"
-            android:launchMode="singleTop">
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
