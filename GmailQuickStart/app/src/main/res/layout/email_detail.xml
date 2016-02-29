@@ -1,0 +1,26 @@
+<LinearLayout
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+<!--<TextView android:id="@+id/email_detail"-->
+          <!--style="?android:attr/textAppearanceLarge"-->
+          <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
+          <!--xmlns:tools="http://schemas.android.com/tools"-->
+          <!--android:layout_width="match_parent"-->
+          <!--android:layout_height="match_parent"-->
+          <!--android:padding="16dp"-->
+          <!--android:textIsSelectable="true"-->
+          <!--tools:context="com.example.gmailquickstart.emailDetailFragment"/>-->
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></WebView>
+    <TextView
+        android:id="@+id/email_TextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HELLO"/>
+
+</LinearLayout>
+

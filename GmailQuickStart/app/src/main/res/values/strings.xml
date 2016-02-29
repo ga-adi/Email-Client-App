@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GmailQuickStart</string>
+    <string name="title_email_list">emails</string>
+    <string name="title_email_detail">email Detail</string>
+</resources>
