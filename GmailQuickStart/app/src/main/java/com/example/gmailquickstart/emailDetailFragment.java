@@ -1,5 +1,6 @@
 package com.example.gmailquickstart;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -8,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.gmailquickstart.emailStuff.EMailManager;
 import com.example.gmailquickstart.emailStuff.Email;
@@ -60,6 +63,21 @@ public class emailDetailFragment extends Fragment {
                 Log.d("emailDetailFragment","email is not null");
             }
 
+            Button replyButton = (Button)getActivity().findViewById(R.id.replyButton);
+            if(replyButton!=null) {
+                replyButton.setEnabled(true);
+            }
+
+            replyButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(getActivity(),"PRESSED REPLY",Toast.LENGTH_SHORT).show();
+                    Intent toComposeIntent = new Intent(getActivity(), ComposeActivity.class);
+                    toComposeIntent.putExtra("DRAFT",mEmail.getTheID());
+                    startActivity(toComposeIntent);
+
+                }
+            });
             /*Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {

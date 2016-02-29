@@ -3,6 +3,7 @@ package com.example.gmailquickstart;
 import android.accounts.AccountManager;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,9 +15,12 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -75,10 +79,14 @@ public class EmailListActivity extends AppCompatActivity {
      * device.
      */
     private boolean mTwoPane;
-
+    //quick fix to add search capabilities
+    private boolean isDisplayingDraft=false;
+    private boolean isRequestedViaSearch=false;
+    private String searchString="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         setContentView(R.layout.activity_email_list);
 
@@ -121,6 +129,7 @@ public class EmailListActivity extends AppCompatActivity {
         inboxButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isDisplayingDraft=false;
                 EMailManager.getInstance().clearEmails();
                 new MakeRequestTask(mCredential).execute();
             }
@@ -129,6 +138,7 @@ public class EmailListActivity extends AppCompatActivity {
         draftDirButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isDisplayingDraft=true;
                 EMailManager.getInstance().clearEmails();
                 new MakeRequestTask(mCredential).execute("DRAFT");
             }
@@ -149,6 +159,23 @@ public class EmailListActivity extends AppCompatActivity {
     }
 
     //OVERIDDEN METHODS BELOW
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options_menu, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+
+        return true;
+    }
+
     /**
      * Called whenever this activity is pushed to the foreground, such as after
      * a call to onCreate().
@@ -217,6 +244,25 @@ public class EmailListActivity extends AppCompatActivity {
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            this.searchString = intent.getStringExtra(SearchManager.QUERY);
+            this.isRequestedViaSearch=true;
+            if(isDisplayingDraft){
+                EMailManager.getInstance().clearEmails();
+                new MakeRequestTask(mCredential).execute("DRAFT");
+            }else{
+                EMailManager.getInstance().clearEmails();
+                new MakeRequestTask(mCredential).execute("INBOX","CATEGORY_PERSONAL");
+            }
+        }
     }
     //methods from Google API example
     /**
@@ -460,7 +506,13 @@ public class EmailListActivity extends AppCompatActivity {
             }
 
             //ListMessagesResponse response =mService.users().messages().list(user).execute();
-            ListMessagesResponse response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).execute();
+            ListMessagesResponse response=null;
+            if(EmailListActivity.this.isRequestedViaSearch) {
+                response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).setQ(EmailListActivity.this.searchString).execute();
+                EmailListActivity.this.isRequestedViaSearch=false;
+            }else {
+                response = mService.users().messages().list(user).setLabelIds(theLabels).setIncludeSpamTrash(false).setMaxResults(20L).execute();
+            }
             //ListMessagesResponse response = mService.users().messages().list(user).setQ("google").execute();
 
             EMailManager emailManager =  EMailManager.getInstance();

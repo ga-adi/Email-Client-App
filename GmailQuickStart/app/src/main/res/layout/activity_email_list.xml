@@ -63,6 +63,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
+            <Button
+                android:id="@+id/replyButton"
+                android:text="reply"
+                android:enabled="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"/>
+
         </LinearLayout>
     </android.support.v7.widget.Toolbar>
 

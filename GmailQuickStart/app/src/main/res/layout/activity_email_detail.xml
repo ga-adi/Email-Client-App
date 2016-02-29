@@ -65,13 +65,12 @@
             android:orientation="horizontal">
 
             <Button
-                android:text="REPLY"
+                android:id="@+id/replyButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-            <Button
-                android:text="FORWARD"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:text="reply"/>
+  
+
 
         </LinearLayout>
     </android.support.v7.widget.Toolbar>
