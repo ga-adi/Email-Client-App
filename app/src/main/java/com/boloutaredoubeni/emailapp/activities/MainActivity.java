@@ -65,6 +65,9 @@ public class MainActivity
       @Override
       public void onClick(View v) {
         // TODO: Start A create Email Activity
+        Intent intent =
+            new Intent(MainActivity.this, ComposeEmailActivity.class);
+        startActivity(intent);
       }
     });
 
