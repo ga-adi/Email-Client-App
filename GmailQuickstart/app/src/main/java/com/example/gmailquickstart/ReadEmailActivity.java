@@ -118,16 +118,14 @@ public class ReadEmailActivity extends AppCompatActivity {
                         if(part.getMimeType().contains("multipart")){
                             for(MessagePart partII : part.getParts()){
                                 if(partII.getMimeType().equals("text/plain")){
-                                    sb.append(new String(Base64.decodeBase64(partII.getBody().getData())));
-                                }
+                                    sb.append(new String(Base64.decodeBase64(partII.getBody().getData())));}
                             }
                         } else if (part.getMimeType().equals("text/plain")){
                             sb.append(new String (Base64.decodeBase64(part.getBody().getData())));
                         }
                     }
-                } else {
-                    sb.append(new String (Base64.decodeBase64(mMessage.getPayload().getBody().getData())));
-                }
+                } else {sb.append(new String (Base64.decodeBase64(mMessage.getPayload().getBody().getData())));}
+
                 String body = sb.toString();
                 mEmail.setmPayloadPartsBodyData(body);
 

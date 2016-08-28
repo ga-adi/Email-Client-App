@@ -89,10 +89,8 @@ public class MainActivity extends AppCompatActivity {
         // Initialize credentials and service object (ActionBar title updated to reflect
         // the email account currently listed)
         settings = getSharedPreferences(SHARED_PREFS,Context.MODE_PRIVATE);
-        mCredential = GoogleAccountCredential.usingOAuth2(
-                getApplicationContext(), Arrays.asList(SCOPES))
-                .setBackOff(new ExponentialBackOff())
-                .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+        mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(), Arrays.asList(SCOPES))
+                .setBackOff(new ExponentialBackOff()).setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
         mActionbar.setTitle(settings.getString(MainActivity.PREF_ACCOUNT_NAME,""));
 
         //Instantiate List of Email Objects in RecyclerView via custom adapter
@@ -137,7 +135,8 @@ public class MainActivity extends AppCompatActivity {
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();}
                 } else if (resultCode == RESULT_CANCELED) {
-                    Toast.makeText(MainActivity.this, "Account unspecified.", Toast.LENGTH_SHORT).show();}
+                    Toast.makeText(MainActivity.this, "Account unspecified.", Toast.LENGTH_SHORT).show();
+                }
                 break;
             case REQUEST_AUTHORIZATION:
                 if (resultCode != RESULT_OK) {chooseAccount();}
@@ -152,16 +151,12 @@ public class MainActivity extends AppCompatActivity {
         if (mCredential.getSelectedAccountName() == null) {chooseAccount();}
         else {
             if (isDeviceOnline()) {new MakeRequestTask(mCredential).execute();}
-            else {
-                Toast.makeText(MainActivity.this, "No network connection available.", Toast.LENGTH_SHORT).show();
-            }
+            else {Toast.makeText(MainActivity.this, "No network connection available.", Toast.LENGTH_SHORT).show();}
         }
     }
 
     //Starts an activity in Google Play Services so the user can pick an account
-    private void chooseAccount() {
-        startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-    }
+    private void chooseAccount() {startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);}
 
     //Check to confirm network connectivity
     private boolean isDeviceOnline() {
@@ -232,10 +227,7 @@ public class MainActivity extends AppCompatActivity {
                 // the data is pulled directly from the arraylist instead of the network to speed
                 // up runtime of populating the email list
                 Boolean isNew = true;
-                for (Email z:EmailList.getInstance().getAllEmails()) {
-                    if(z.getmEmailID().equals(actual.getId())){
-                        isNew = false;}
-                }
+                for (Email z:EmailList.getInstance().getAllEmails()) {if(z.getmEmailID().equals(actual.getId())){isNew = false;}}
 
                 if(isNew){
                     //create new email object to represent the message in the app and show the
@@ -253,25 +245,20 @@ public class MainActivity extends AppCompatActivity {
                         if(actual.getPayload().getHeaders().get(x).getName().equals("Subject")){
                             email.setmPayloadHeadersSubject(actual.getPayload().getHeaders().get(x).getValue());}
                     }
-                    EmailList.getInstance().addEmail(i, email);
-                }
+                    EmailList.getInstance().addEmail(i, email);}
             }
-
             return EmailList.getInstance().getInbox();
         }
 
         //update the email list once all data is confirmed
         @Override
-        protected void onPostExecute(ArrayList<Email> output) {
-            mEmailAdapter.notifyDataSetChanged();
-        }
+        protected void onPostExecute(ArrayList<Email> output) {mEmailAdapter.notifyDataSetChanged();}
 
         @Override
         protected void onCancelled() {
             if (mLastError != null) {
                 if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
-                    showGooglePlayServicesAvailabilityErrorDialog(
-                            ((GooglePlayServicesAvailabilityIOException) mLastError).getConnectionStatusCode());}
+                    showGooglePlayServicesAvailabilityErrorDialog(((GooglePlayServicesAvailabilityIOException) mLastError).getConnectionStatusCode());}
                 else if (mLastError instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(((UserRecoverableAuthIOException) mLastError).getIntent(),MainActivity.REQUEST_AUTHORIZATION);}
                 else {
@@ -309,9 +296,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     ArrayList<Email> newList = new ArrayList<>();
                     for (Email email:EmailList.getInstance().getInbox()) {
-                        if(email.getmPayloadHeadersSubject().contains(newText)){
-                            newList.add(email);
-                        }
+                        if(email.getmPayloadHeadersSubject().contains(newText)){newList.add(email);}
                     }
                     EmailList.getInstance().clear();
                     EmailList.getInstance().getAllEmails().addAll(newList);
@@ -320,9 +305,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-
-
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -337,7 +319,6 @@ public class MainActivity extends AppCompatActivity {
                 EmailList.getInstance().getAllEmails().clear();
                 mEmailAdapter.notifyDataSetChanged();
                 refreshResults();
-
         }
         return super.onOptionsItemSelected(item);
     }

@@ -39,7 +39,6 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-
 public class ComposeEmailActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
@@ -116,7 +115,6 @@ public class ComposeEmailActivity extends AppCompatActivity {
                 sendMessage(mService,mSettings.getString(MainActivity.PREF_ACCOUNT_NAME,""),mMessage);}
             catch(MessagingException e){e.printStackTrace();}
             catch(IOException e){e.printStackTrace();}
-
             return null;
         }
 
@@ -134,10 +132,8 @@ public class ComposeEmailActivity extends AppCompatActivity {
         if(getIntent().hasExtra(EmailAdapter.EMAIL_SUBJECT)){
             String subject = "Re: " + getIntent().getStringExtra(EmailAdapter.EMAIL_SUBJECT);
             mSubject.setText(subject);}
-        if(getIntent().hasExtra(EmailAdapter.EMAIL_CC)){
-            mCC.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_CC));}
-        if(getIntent().hasExtra(EmailAdapter.EMAIL_TO)){
-            mTo.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_TO));}
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_CC)){mCC.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_CC));}
+        if(getIntent().hasExtra(EmailAdapter.EMAIL_TO)){mTo.setText(getIntent().getStringExtra(EmailAdapter.EMAIL_TO));}
         if(getIntent().hasExtra(EmailAdapter.EMAIL_BODY)){
             String body = "\n\n------------------\n" + getIntent().getStringExtra(EmailAdapter.EMAIL_BODY);
             mBody.setText(body);}
@@ -175,5 +171,4 @@ public class ComposeEmailActivity extends AppCompatActivity {
         Message message = createMessageWithEmail(email);
         Message result = service.users().messages().send(userId, message).execute();
     }
-
 }
