@@ -1,14 +1,20 @@
 package com.charlesdrews.charliemail;
 
+import android.Manifest;
 import android.accounts.AccountManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -31,11 +37,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int REQUEST_ACCOUNT_PICKER = 1000;
     public static final int REQUEST_AUTHORIZATION = 1001;
     private static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
+    private static final int REQUEST_GET_ACCOUNTS_PERMISSION = 1003;
     public static final String PREF_ACCOUNT_NAME = "accountName";
-    public static final String[] SCOPES = { GmailScopes.GMAIL_MODIFY };
+    public static final String[] SCOPES = {GmailScopes.GMAIL_MODIFY};
 
     private GoogleAccountCredential mCredential;
-    private String mAuthResultMsg;
+    private String mAuthResultMsg = "";
     private boolean mTwoPanes;
 
     @Override
@@ -150,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onActivityResult(
             int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
                     isGooglePlayServicesAvailable();
@@ -161,15 +168,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         data.getExtras() != null) {
                     String accountName =
                             data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+
                     if (accountName != null) {
-                        mCredential.setSelectedAccountName(accountName);
+
                         SharedPreferences settings =
                                 getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = settings.edit();
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();
+
+                        // In order to set the selected account on the credential object,
+                        // must have GET_ACCOUNTS permission. Need to request that for API 23+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                                ContextCompat.checkSelfPermission(this, Manifest.permission.GET_ACCOUNTS)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(this,
+                                    new String[]{Manifest.permission.GET_ACCOUNTS},
+                                    REQUEST_GET_ACCOUNTS_PERMISSION);
+
+                        } else {
+                            mCredential.setSelectedAccountName(accountName);
+                            mAuthResultMsg = accountName + " authorized.";
+                        }
                     }
-                    mAuthResultMsg = accountName + " authorized.";
                 } else if (resultCode == RESULT_CANCELED) {
                     mAuthResultMsg = "Account unspecified.";
                 }
@@ -184,6 +205,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case REQUEST_GET_ACCOUNTS_PERMISSION:
+                SharedPreferences settings = getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE);
+                String accountName = settings.getString(PREF_ACCOUNT_NAME, null);
+                if (accountName != null) {
+                    mCredential.setSelectedAccountName(accountName);
+                    mAuthResultMsg = accountName + " authorized.";
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
     void chooseAccount() {
         startActivityForResult(
                 mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
@@ -195,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (GooglePlayServicesUtil.isUserRecoverableError(connectionStatusCode)) {
             showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
             return false;
-        } else if (connectionStatusCode != ConnectionResult.SUCCESS ) {
+        } else if (connectionStatusCode != ConnectionResult.SUCCESS) {
             return false;
         }
         return true;
